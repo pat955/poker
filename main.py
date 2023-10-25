@@ -4,7 +4,6 @@ import random
 def main():
     p1 = Player('Player 1', Hand())
     p2 = Player('Player 2', Hand())
-    
 
     for i in range(0, 1000):
 
@@ -13,11 +12,8 @@ def main():
         new_deck.shuffle()
         p1.play_poker(p2, new_deck)
         
-        
     print(p1.report(), p2.report())
 
-     
-   
 class Deck():
     def __init__(self):
         self.suits = ['Diamonds', 'Spades', 'Hearts', 'Clubs']
@@ -52,19 +48,13 @@ class Card():
     def __repr__(self):
         return f'{self.rank} of {self.suit}'
 
-
-    #def __str__(self):
-        #return f'{self.rank} of {self.suit}'
-
 class Hand():
     def __init__(self): 
-        #Card(1, 'Spades'), Card(1, 'Diamonds'), Card(2, 'Hearts'), Card(5, 'Diamonds'), Card(6, 'Hearts')
         self.lst_cards = []
-        #self.type = None #(type, type of pair/'n/a')
-        # self.possible_ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-    
+
     def decide_type(self):
-        
+        # From highest value to lowest to make sure wins are correct
+
         if self.is_royal() and self.is_flush():
             return ('Royal Flush', 'n/a')
         elif self.is_flush() and self.is_straight():
@@ -114,6 +104,7 @@ class Hand():
         return False 
 
     def find_pairs(self):
+        # read length of rank count ex. {11:3, 12:2} to tell with type it is 
         rank_count = self.make_sorted_value_dict(True)
 
         if len(rank_count) == 2:
@@ -128,20 +119,22 @@ class Hand():
 
         elif len(rank_count) == 4:
             return ('One Pair', rank_count[0][0])
-        
-        raise Exception('Something went wrong')
+
+        # This shouldnt be called without has_pairs() first 
+        raise Exception('Something went wrong, remember to raise has_pairs() function first')
 
     
     def make_sorted_value_dict(self, rank_or_suit=True):
+        # count amount of ranks or suits in a dictionary format
+
         if rank_or_suit == True:
             rank_count = {}
-
             for card in self.lst_cards:
                 if card.rank not in rank_count:
                     rank_count[card.rank] = 1
                 else:
                     rank_count[card.rank] += 1
-            return tuple(sorted(rank_count.items(), key=lambda item: item[1], reverse=True))
+            return tuple(sorted(rank_count.items(), key=lambda item: (item[1], item[0]), reverse=True))
 
         suit_count = {}
         for card in self.lst_cards:
@@ -149,7 +142,7 @@ class Hand():
                 suit_count[card.suit] = 1
             else:
                 suit_count[card.suit] += 1 
-        return tuple(sorted(suit_count.items(), key=lambda item: item[1], reverse=True))
+        return tuple(sorted(suit_count.items(), key=lambda item: (item[1], item[0]), reverse=True))
 
     def clear(self):
         self.lst_cards = []
@@ -168,15 +161,15 @@ class Player():
         self.ties = 0 
 
     def decide_win(self, target, self_value, target_value):
-        try:
-            if self_value > target_value:
-                self.win(target)
-            elif self_value < target_value:
-                target.win(self)
-            else:
-                return False
-        except:
-            raise Exception('Something went wrong', self_value, target_value)
+        # register win and loss and if tie return false so you can set up other conditions
+        if self_value > target_value:
+            self.win(target)
+        elif self_value < target_value:
+            target.win(self)
+        else:
+            return False
+
+    def decide_total_win(self):
         
     def win(self, loser):
         self.wins += 1
@@ -185,16 +178,13 @@ class Player():
     def tie(self, target):
         self.ties += 1
         target.ties += 1
-    """
-    def high_card_loop(self, p2, index=0):
-        while self.decide_win(p2, self.hand.find_high_card(index), p2.hand.find_high_card(index)):
-            if index == 4:
-                self.tie(p2)
-                break
-            index += 1
-    """     
 
     def play_poker(self, p2, deck):
+        # Clears last hand
+        # Populate their hands with 5 cards 
+        # Get results for their type
+        # Decide who wins
+
         self.hand.clear()
         p2.hand.clear()
 
