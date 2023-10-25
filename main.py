@@ -1,18 +1,17 @@
 import random
-#check if two pairs and fullhouse picks first highest rank or the lower, fix it 
 
 def main():
     p1 = Player('Player 1', Hand())
     p2 = Player('Player 2', Hand())
 
     for i in range(0, 1000):
-
         new_deck = Deck()
         new_deck.generate_deck()
         new_deck.shuffle()
         p1.play_poker(p2, new_deck)
         
     print(p1.report(), p2.report())
+
 
 class Deck():
     def __init__(self):
@@ -36,6 +35,7 @@ class Deck():
     def deal_card(self):
         return self.current_deck.pop()
 
+
 class Card():
     def __init__(self, rank, suit):
         self.rank = rank
@@ -44,9 +44,9 @@ class Card():
     def check_card(self):
         return f'{self.rank} of {self.suit}'
 
-
     def __repr__(self):
         return f'{self.rank} of {self.suit}'
+
 
 class Hand():
     def __init__(self): 
@@ -57,18 +57,23 @@ class Hand():
 
         if self.is_royal() and self.is_flush():
             return ('Royal Flush', 'n/a')
+
         elif self.is_flush() and self.is_straight():
             return ('Straight Flush', 'n/a')
+
         elif self.has_pairs():
             results = self.find_pairs()
             if results[0] == 'Four of a Kind' or results[0] == 'Full House':
                 return results
             elif not self.is_flush() and not self.is_straight():
                 return results
+
         elif self.is_flush():
             return ('Flush', 'n/a')
+
         elif self.is_straight():
             return ('Straight', 'n/a')
+
         return ('High Card', self.find_high_card(0))
 
     def is_flush(self):
@@ -120,9 +125,7 @@ class Hand():
         elif len(rank_count) == 4:
             return ('One Pair', rank_count[0][0])
 
-        # This shouldnt be called without has_pairs() first 
         raise Exception('Something went wrong, remember to raise has_pairs() function first')
-
     
     def make_sorted_value_dict(self, rank_or_suit=True):
         # count amount of ranks or suits in a dictionary format
@@ -151,6 +154,7 @@ class Hand():
         for i in range(0, 5):
             self.lst_cards.append(deck.deal_card())
 
+
 class Player():
     def __init__(self, name, hand):
         self.hand_types = ['High Card', 'One Pair', 'Two Pairs', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush', 'Royal Flush']
@@ -169,35 +173,15 @@ class Player():
         else:
             return False
 
-    def decide_total_win(self):
-        
-    def win(self, loser):
-        self.wins += 1
-        loser.losses += 1
-    
-    def tie(self, target):
-        self.ties += 1
-        target.ties += 1
-
-    def play_poker(self, p2, deck):
-        # Clears last hand
-        # Populate their hands with 5 cards 
-        # Get results for their type
-        # Decide who wins
-
-        self.hand.clear()
-        p2.hand.clear()
-
-        self.hand.populate_poker(deck)
-        p2.hand.populate_poker(deck)
-
+    def decide_total_win(self, p2):
+        # Get results, type index to spare place
         p1_results = self.hand.decide_type()
         p2_results = p2.hand.decide_type()
         
         p1_type_index = self.hand_types.index(p1_results[0])
         p2_type_index = p2.hand_types.index(p2_results[0])
-        index = 0
-        
+        index = 0 
+
         if self.decide_win(p2, p1_type_index, p2_type_index) == False:
             # If theres a tie between p1 and 2 hands, continue
 
@@ -226,8 +210,28 @@ class Player():
                             break
                         index += 1
  
+    def win(self, loser):
+        self.wins += 1
+        loser.losses += 1
+    
+    def tie(self, target):
+        self.ties += 1
+        target.ties += 1
+
+    def play_poker(self, p2, deck):
+        # Clears last hand
+        self.hand.clear()
+        p2.hand.clear()
+
+        # Populate their hands with 5 cards 
+        self.hand.populate_poker(deck)
+        p2.hand.populate_poker(deck)
+
+        # Decide who wins
+        self.decide_total_win(p2)
+     
     def report(self):
         win_rate = (self.wins/(self.wins + self.losses))*100
-        return f'\n-----{self.name}-----\n*Total wins: {self.wins}\n*Total losses: {self.losses}\n*Total draws: {self.ties}\n*Win rate not incl. ties: {win_rate:.2f}%\n'+ '--'*(len(self.name)+1)
+        return f'\n-----{self.name}-----\n*Total wins: {self.wins}\n*Total losses: {self.losses}\n*Total draws: {self.ties}\n*Win rate not incl. ties: {win_rate:.2f}%\n------------------'
 
 main()
