@@ -1,22 +1,20 @@
 import random
+#check if two pairs and fullhouse picks first highest rank or the lower, fix it 
 
 def main():
-    jack = Player('Jack', Hand())
-    jane = Player('Jane', Hand())
+    p1 = Player('Player 1', Hand())
+    p2 = Player('Player 2', Hand())
     
 
-    for i in range(0, 50):
+    for i in range(0, 1000):
 
         new_deck = Deck()
         new_deck.generate_deck()
         new_deck.shuffle()
-        jack.play_poker(jane, new_deck)
-        print(jack.hand.decide_type(), jane.hand.decide_type())
-        #print(jack.hand.decide_type(), jane.hand.decide_type())
-        #if jack.hand.decide_type()[0] == 'Straight' or  jane.hand.decide_type()[0] == 'Straight':
-         #   print('FOUND!\n', jack.hand.decide_type(), jane.hand.decide_type(), jack.hand.lst_cards, jane.hand.lst_cards)
-    print(jane.report())
-    print(jack.report())
+        p1.play_poker(p2, new_deck)
+        
+        
+    print(p1.report(), p2.report())
 
      
    
@@ -66,6 +64,7 @@ class Hand():
         # self.possible_ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
     
     def decide_type(self):
+        
         if self.is_royal() and self.is_flush():
             return ('Royal Flush', 'n/a')
         elif self.is_flush() and self.is_straight():
@@ -74,14 +73,13 @@ class Hand():
             results = self.find_pairs()
             if results[0] == 'Four of a Kind' or results[0] == 'Full House':
                 return results
+            elif not self.is_flush() and not self.is_straight():
+                return results
         elif self.is_flush():
             return ('Flush', 'n/a')
         elif self.is_straight():
             return ('Straight', 'n/a')
-        elif self.has_pairs():
-            results = self.find_pairs()
-            return results
-        return ('High Card', self.find_high_card(), self.has_pairs())
+        return ('High Card', self.find_high_card(0))
 
     def is_flush(self):
         suit_count = self.make_sorted_value_dict(False)
@@ -102,9 +100,9 @@ class Hand():
         rank_count = {card.rank for card in self.lst_cards}
         return (max(rank_count) - min(rank_count)+1) == len(self.lst_cards) and len(rank_count) == len(self.lst_cards)
                     
-    def find_high_card(self):
+    def find_high_card(self, index):
         highest_card = -1
-        for card in self.lst_cards:
+        for card in self.lst_cards[index:]:
             if card.rank > highest_card:
                 highest_card = card.rank
         return highest_card
@@ -121,14 +119,12 @@ class Hand():
         if len(rank_count) == 2:
             if rank_count[0][1] == 3 and rank_count[1][1] == 2:
                 return('Full House', rank_count[0][0], rank_count[1][0])
-            else:
-                return ('Four of a Kind', rank_count[0][0])
+            return ('Four of a Kind', rank_count[0][0])
         
         elif len(rank_count) == 3:
             if rank_count[0][1] == 2 and rank_count[1][1] == 2:
                 return ('Two Pairs', rank_count[0][0], rank_count[1][0])
-            else:
-                return ('Three of a Kind', rank_count[0][0])
+            return ('Three of a Kind', rank_count[0][0])
 
         elif len(rank_count) == 4:
             return ('One Pair', rank_count[0][0])
@@ -189,33 +185,59 @@ class Player():
     def tie(self, target):
         self.ties += 1
         target.ties += 1
+    """
+    def high_card_loop(self, p2, index=0):
+        while self.decide_win(p2, self.hand.find_high_card(index), p2.hand.find_high_card(index)):
+            if index == 4:
+                self.tie(p2)
+                break
+            index += 1
+    """     
 
-    def play_poker(self, other_player, deck):
+    def play_poker(self, p2, deck):
         self.hand.clear()
-        other_player.hand.clear()
+        p2.hand.clear()
 
         self.hand.populate_poker(deck)
-        other_player.hand.populate_poker(deck)
+        p2.hand.populate_poker(deck)
 
         p1_results = self.hand.decide_type()
-        p2_results = other_player.hand.decide_type()
+        p2_results = p2.hand.decide_type()
         
         p1_type_index = self.hand_types.index(p1_results[0])
-        p2_type_index = other_player.hand_types.index(p2_results[0])
+        p2_type_index = p2.hand_types.index(p2_results[0])
+        index = 0
         
-        if self.decide_win(other_player, p1_type_index, p2_type_index) == False:
+        if self.decide_win(p2, p1_type_index, p2_type_index) == False:
+            # If theres a tie between p1 and 2 hands, continue
 
-            if self.decide_win(other_player, p1_results[1], p2_results[1]) == False:
+            if self.decide_win(p2, p1_results[1], p2_results[1]) == False:
+                # if the rank of their type is the same continue
 
                 if p1_results[0] == 'Two Pairs' or p1_results[0] == 'Full House':
+                    # if their type is two pairs or fullhouse, check their secondary type
 
-                    if self.decide_win(other_player, p1_results[2], p2_results[2]) == False:
-                        if self.decide_win(other_player, self.hand.find_high_card(), other_player.hand.find_high_card()) == False:
-                            self.tie(other_player)
-                elif self.decide_win(other_player, self.hand.find_high_card(), other_player.hand.find_high_card()) == False:
-                            self.tie(other_player)
+                    if self.decide_win(p2, p1_results[2], p2_results[2]) == False:
+                        
+                        #raise Exception('something wrong', p1_results, p2_results, p1_results[1], p2_results[1])
+                        # if  secondary rank types from full house and two pairs are still the same,
+                        # compare the next highest card until no more are present
+
+                        while self.decide_win(p2, self.hand.find_high_card(index), p2.hand.find_high_card(index)) == False:
+                            if index == 4:
+                                self.tie(p2)
+                                break
+                            index += 1
+                else:
+                    # If the types arent two pairs or fullhouse, compare the next high card until no more are present
+                    while self.decide_win(p2, self.hand.find_high_card(index), p2.hand.find_high_card(index)) == False:
+                        if index == 4:
+                            self.tie(p2)
+                            break
+                        index += 1
  
     def report(self):
-        return f'\n-----{self.name}-----\n*Total wins: {self.wins}\n*Total losses: {self.losses}\n*Total draws: {self.ties}\n--------------'
+        win_rate = (self.wins/(self.wins + self.losses))*100
+        return f'\n-----{self.name}-----\n*Total wins: {self.wins}\n*Total losses: {self.losses}\n*Total draws: {self.ties}\n*Win rate not incl. ties: {win_rate:.2f}%\n'+ '--'*(len(self.name)+1)
 
 main()
