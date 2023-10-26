@@ -8,10 +8,10 @@ def main():
         new_deck = Deck()
         new_deck.generate_deck()
         new_deck.shuffle()
-        p1.play_poker(p2, new_deck)
-    
+        p1.play_poker(p2, new_deck) 
         
     print(p1.report(), p2.report())
+    print(f'Tie precentage: {(p1.ties/(p1.wins + p1.losses))*100:.2f}%')
 
 
 class Deck():
@@ -29,9 +29,8 @@ class Deck():
         random.shuffle(self.current_deck)
 
     def generate_deck(self):
-        for rank in self.ranks:
-            for suit in self.suits:
-                self.current_deck.append(Card(rank, suit))
+        self.current_deck = [Card(rank,suit) for rank in self.ranks for suit in self.suits]
+        
         
     def deal_card(self):
         return self.current_deck.pop()
@@ -51,9 +50,7 @@ class Card():
             return f'{num_to_name[self.rank]} of {self.suit}'
         return f'{self.rank} of {self.suit}'
 
-   
-
-
+  
 class Hand():
     def __init__(self): 
         self.lst_cards = []
@@ -116,7 +113,7 @@ class Hand():
         return False 
 
     def find_pairs(self):
-        # read length of rank count ex. {11:3, 12:1, 9:1} to tell with type it is 
+        # read length of rank count ex. {11:3, 12:1, 9:1} to tell what type it is 
         rank_count = self.make_sorted_value_dict(True)
 
         if len(rank_count) == 2:
@@ -239,6 +236,6 @@ class Player():
      
     def report(self):
         win_rate = (self.wins/(self.wins + self.losses))*100
-        return f'\n-----{self.name}-----\n*Total wins: {self.wins}\n*Total losses: {self.losses}\n*Total draws: {self.ties}\n*Win rate not incl. ties: {win_rate:.2f}%\n------------------'
+        return f'\n-----{self.name}-----\n*Total wins: {self.wins}\n*Total losses: {self.losses}\n*Total ties: {self.ties}\n*Win rate not incl. ties: {win_rate:.2f}%\n------------------'
 
 main()
