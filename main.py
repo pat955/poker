@@ -9,6 +9,7 @@ def main():
         new_deck.generate_deck()
         new_deck.shuffle()
         p1.play_poker(p2, new_deck)
+    
         
     print(p1.report(), p2.report())
 
@@ -45,7 +46,12 @@ class Card():
         return f'{self.rank} of {self.suit}'
 
     def __repr__(self):
+        num_to_name = {11: 'Jack', 12: 'Queen', 13: 'King', 14: 'Ace'}
+        if self.rank in num_to_name:
+            return f'{num_to_name[self.rank]} of {self.suit}'
         return f'{self.rank} of {self.suit}'
+
+   
 
 
 class Hand():
@@ -96,6 +102,7 @@ class Hand():
         return (max(rank_count) - min(rank_count)+1) == len(self.lst_cards) and len(rank_count) == len(self.lst_cards)
                     
     def find_high_card(self, index):
+        # Index parameter added so that you can find the second highest card in case of a tie
         highest_card = -1
         for card in self.lst_cards[index:]:
             if card.rank > highest_card:
@@ -109,7 +116,7 @@ class Hand():
         return False 
 
     def find_pairs(self):
-        # read length of rank count ex. {11:3, 12:2} to tell with type it is 
+        # read length of rank count ex. {11:3, 12:1, 9:1} to tell with type it is 
         rank_count = self.make_sorted_value_dict(True)
 
         if len(rank_count) == 2:
