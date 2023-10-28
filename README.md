@@ -1,6 +1,6 @@
 # poker
-Oppgave 54 fra ProjectEuler.com gitt av Espen
+Oppgave 54 fra ProjectEuler.com
 
-#oppdatering 
+---Oppdatering---
 Jeg misforsto oppgaven, gjør den rikitg nå i main1.py. 
-Tenker å lage den første main mer interaktiv
+Tenker å lage den første main mer interaktiv.
