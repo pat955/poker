@@ -4,11 +4,12 @@ def main():
     p1 = Player('Player 1', Hand())
     p2 = Player('Player 2', Hand())
 
-    for i in range(0, 1000):
+    for i in range(0, 20000):
         new_deck = Deck()
         new_deck.generate_deck()
         new_deck.shuffle()
         p1.play_poker(p2, new_deck) 
+       
         
     print(p1.report(), p2.report())
     print(f'Tie precentage: {(p1.ties/(p1.wins + p1.losses))*100:.2f}%')
@@ -20,10 +21,11 @@ class Deck():
         self.ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
         self.current_deck = []
     
-    #def check_deck(self):
-     #   return self.current_deck
+    def check_deck(self):
+        return self.current_deck
     
     def shuffle(self):
+        # Returns nothing but shuffles current deck
         if len(self.current_deck) == 0:
             raise Exception('Can\'t shuffle empty deck.') 
         random.shuffle(self.current_deck)
@@ -32,6 +34,7 @@ class Deck():
         self.current_deck = [Card(rank,suit) for rank in self.ranks for suit in self.suits]
         
     def deal_card(self):
+        # pop() removes card but also returns it for use
         return self.current_deck.pop()
 
 
@@ -40,10 +43,13 @@ class Card():
         self.rank = rank
         self.suit = suit
     
-    #def check_card(self):
-    #    return f'{self.rank} of {self.suit}'
+    def check_card(self):
+        return f'{self.rank} of {self.suit}'
 
     def __repr__(self):
+        # Everytime a card is printed it will show up in a "rank of suit" format,
+        # if any of the cards are royal itll use their names instead of value index
+
         num_to_name = {11: 'Jack', 12: 'Queen', 13: 'King', 14: 'Ace'}
         if self.rank in num_to_name:
             return f'{num_to_name[self.rank]} of {self.suit}'
@@ -52,7 +58,15 @@ class Card():
   
 class Hand():
     def __init__(self): 
-        self.lst_cards = []
+        self.cards = []
+
+    def clear(self):
+        self.cards = []
+
+    def populate_poker(self, deck):
+        # Want to redo this so that itll ask for an amount and then deal those cards so i can use it for more than poker.
+        for i in range(0, 5):
+            self.cards.append(deck.deal_card())
 
     def decide_type(self):
         # From highest value to lowest to make sure wins are correct
@@ -68,6 +82,12 @@ class Hand():
             if results[0] == 'Four of a Kind' or results[0] == 'Full House':
                 return results
             elif not self.is_flush() and not self.is_straight():
+                """ 
+                Ive set this up so that itll check that the hand isnt a flush or straight before returning pair results
+                Python ignores reused elif statement so i have to set it up this way for my current skill level
+                It doesnt look the most clean but i can only think of doing this with a dictionary
+                but i dont have the knowledge to execute that effectively.
+                """
                 return results
 
         elif self.is_flush():
@@ -79,11 +99,12 @@ class Hand():
         return ('High Card', self.find_high_card(0))
 
     def is_flush(self):
+        # returns bool based on if the theres only one type of suit in hand
         return len(self.make_sorted_value_dict(False)) == 1
 
     def is_royal(self):
         royal_cards = [10, 11, 12, 13, 14]
-        for card in self.lst_cards:
+        for card in self.cards:
             if card.rank in royal_cards:
                 royal_cards.remove(card.rank)
             else:
@@ -91,23 +112,29 @@ class Hand():
         return True
 
     def is_straight(self):
-        rank_count = {card.rank for card in self.lst_cards}
-        return (max(rank_count) - min(rank_count)+1) == len(self.lst_cards) and len(rank_count) == len(self.lst_cards)
+        """
+        Makes a set of all the ranks found in hand.
+        Returns True if max value - min value + 1 is the length of hand and the set is as long as the hand.
+        Example:
+        (3,4,5,6,7) is the hand. 7 - 3 + 1 = 5 is the the length of hand and
+        we have 5 different ranks so the length  of the set is the same as hand.
+        (4, 5, 7, 8, 9) is almost straight but 9-4 +1 = 6 /= len(hand)
+        """
+        found_ranks = {card.rank for card in self.cards}
+        return (max(found_ranks) - min(found_ranks)+1) == len(self.cards) and len(found_ranks) == len(self.cards)
                     
     def find_high_card(self, index):
-        # Index parameter added so that you can find the second highest card in case of a tie
+        # Index parameter added so that you can find the next highest card in case of a tie
         highest_card = -1
-        for card in self.lst_cards[index:]:
+        for card in self.cards[index:]:
             if card.rank > highest_card:
                 highest_card = card.rank
         return highest_card
         
     def has_pairs(self):
-        rank_count = self.make_sorted_value_dict(True)
-        if len(rank_count) != 5:
-            return True
-        return False 
-
+        # (2:2, 6:1, 7:1, 3:1) = One Pair and the length isnt 5 so the hand has a pair
+        return len(self.make_sorted_value_dict(True)) != 5
+    
     def find_pairs(self):
         # read length of rank count ex. {11:3, 12:1, 9:1} to tell what type it is 
         rank_count = self.make_sorted_value_dict(True)
@@ -125,38 +152,31 @@ class Hand():
         elif len(rank_count) == 4:
             return ('One Pair', rank_count[0][0])
 
-        raise Exception('Something went wrong, remember to raise has_pairs() function first')
-    
+        raise Exception('Something went wrong, remember to raise has_pairs() first')
+
+    def make_sorted_hand(self, reverse=False):
+        # In case a sorted by rank hand is neeeded but not a suit or rank count
+        return sorted(self.cards, key=lambda card: card.rank, reverse=reverse)
+
     def make_sorted_value_dict(self, rank_or_suit=True):
-        # count amount of ranks or suits in a dictionary format
-
-        if rank_or_suit == True:
-            rank_count = {}
-            for card in self.lst_cards:
-                if card.rank not in rank_count:
-                    rank_count[card.rank] = 1
-                else:
-                    rank_count[card.rank] += 1
-            return tuple(sorted(rank_count.items(), key=lambda item: (item[1], item[0]), reverse=True))
-
-        suit_count = {}
-        for card in self.lst_cards:
-            if card.suit not in suit_count:
-                suit_count[card.suit] = 1
+        # count amount of ranks or suits  show up in a hand in a dictionary format
+        count = {}
+        for card in self.cards:
+            if rank_or_suit:
+                typ = card.rank
             else:
-                suit_count[card.suit] += 1 
-        return tuple(sorted(suit_count.items(), key=lambda item: (item[1], item[0]), reverse=True))
+                typ = card.suit
 
-    def clear(self):
-        self.lst_cards = []
-
-    def populate_poker(self, deck):
-        for i in range(0, 5):
-            self.lst_cards.append(deck.deal_card())
+            if typ not in count:
+                count[typ] = 1
+            else:
+                count[typ] += 1
+        return tuple(sorted(count.items(), key=lambda item: (item[1], item[0]), reverse=True))
 
 
 class Player():
     def __init__(self, name, hand):
+        # hand types needed to determine win by type value, hand is a hand object
         self.hand_types = ['High Card', 'One Pair', 'Two Pairs', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush', 'Royal Flush']
         self.hand = hand
         self.name = name
@@ -165,7 +185,7 @@ class Player():
         self.ties = 0 
 
     def decide_win(self, target, self_value, target_value):
-        # register win and loss and if tie return false so you can set up other conditions
+        # registers win and loss but in case of tie, returns false so other conditions can be set up outside.
         if self_value > target_value:
             self.win(target)
         elif self_value < target_value:
@@ -232,6 +252,6 @@ class Player():
      
     def report(self):
         win_rate = (self.wins/(self.wins + self.losses))*100
-        return f'\n-----{self.name}-----\n*Total wins: {self.wins}\n*Total losses: {self.losses}\n*Total ties: {self.ties}\n*Win rate not incl. ties: {win_rate:.2f}%\n------------------'
+        return f'\n-----{self.name}-----\n~Total wins: {self.wins}\n~Total losses: {self.losses}\n~Total ties: {self.ties}\n~Win rate: {win_rate:.2f}%\n------------------'
 
 main()
