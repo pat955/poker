@@ -1,16 +1,15 @@
 import random
 
 def main():
-    p1 = Player('Player 1', Hand())
-    p2 = Player('Player 2', Hand())
+    p1 = Player('Player 1')
+    p2 = Player('Player 2')
 
-    for i in range(0, 20000):
+    for i in range(0, 10000):
         new_deck = Deck()
         new_deck.generate_deck()
         new_deck.shuffle()
         p1.play_poker(p2, new_deck) 
        
-        
     print(p1.report(), p2.report())
     print(f'Tie precentage: {(p1.ties/(p1.wins + p1.losses))*100:.2f}%')
 
@@ -175,64 +174,62 @@ class Hand():
 
 
 class Player():
-    def __init__(self, name, hand):
+    def __init__(self, name):
         # hand types needed to determine win by type value, hand is a hand object
         self.hand_types = ['High Card', 'One Pair', 'Two Pairs', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush', 'Royal Flush']
-        self.hand = hand
+        self.hand = Hand()
         self.name = name
         self.wins = 0
         self.losses = 0
         self.ties = 0 
+        
 
-    def decide_win(self, target, self_value, target_value):
+    def decide_win(self, self_value, other_value):
         # registers win and loss but in case of tie, returns false so other conditions can be set up outside.
-        if self_value > target_value:
-            self.win(target)
-        elif self_value < target_value:
-            target.win(self)
-        else:
-            return False
+        if self_value == other_value:
+            return 'Tie'
+        return self_value > other_value
 
     def decide_total_win(self, p2):
         # Get results, type index to spare place
-        p1_results = self.hand.decide_type()
-        p2_results = p2.hand.decide_type()
+        p1_res = self.hand.decide_type()
+        p2_res = p2.hand.decide_type()
         
-        p1_type_index = self.hand_types.index(p1_results[0])
-        p2_type_index = p2.hand_types.index(p2_results[0])
+        p1_type_index = self.hand_types.index(p1_res[0])
+        p2_type_index = p2.hand_types.index(p2_res[0])
+
         index = 0 
+        type_comp = self.decide_win(p1_type_index, p2_type_index)
 
-        if self.decide_win(p2, p1_type_index, p2_type_index) == False:
-            # If theres a tie between p1 and 2 hands, continue
+        if type(type_comp) == bool:
+            return self.win(type_comp, p2)
 
-            if self.decide_win(p2, p1_results[1], p2_results[1]) == False:
-                # if the rank of their type is the same continue
+        rank_comp = self.decide_win(p1_res[1], p2_res[1])
+        
+        if type(rank_comp) == bool:
+            return self.win(rank_comp, p2)
 
-                if p1_results[0] == 'Two Pairs' or p1_results[0] == 'Full House':
-                    # if their type is two pairs or fullhouse, check their secondary type
+        elif p1_res[0] == 'Two Pairs' or p1_res[0] == 'Full House':
+            
+            secondary_rank_comp = self.decide_win(p1_res[2], p2_res[2])
+                
+            if type(secondary_rank_comp) == bool:
+                return self.win(secondary_rank_comp, p2)
 
-                    if self.decide_win(p2, p1_results[2], p2_results[2]) == False:
-                        
-                        #raise Exception('something wrong', p1_results, p2_results, p1_results[1], p2_results[1])
-                        # if  secondary rank types from full house and two pairs are still the same,
-                        # compare the next highest card until no more are present
+            return self.next_card_loop(p2)
 
-                        while self.decide_win(p2, self.hand.find_high_card(index), p2.hand.find_high_card(index)) == False:
-                            if index == 4:
-                                self.tie(p2)
-                                break
-                            index += 1
-                else:
-                    # If the types arent two pairs or fullhouse, compare the next high card until no more are present
-                    while self.decide_win(p2, self.hand.find_high_card(index), p2.hand.find_high_card(index)) == False:
-                        if index == 4:
-                            self.tie(p2)
-                            break
-                        index += 1
- 
-    def win(self, loser):
-        self.wins += 1
-        loser.losses += 1
+        return self.next_card_loop(p2)
+
+
+    def win(self, win, p2):
+
+        if win:
+            self.wins += 1
+            p2.losses += 1
+        else:
+            self.losses += 1
+            p2.wins += 1
+
     
     def tie(self, target):
         self.ties += 1
@@ -249,9 +246,21 @@ class Player():
 
         # Decide who wins
         self.decide_total_win(p2)
+
+
+    def next_card_loop(self, p2):
+        index = 0
+        while self.decide_win(self.hand.find_high_card(index), p2.hand.find_high_card(index))  == 'Tie':
+            if index == 4:
+                return self.tie(p2)
+            index += 1
+        return self.win(self.decide_win(self.hand.find_high_card(index), p2.hand.find_high_card(index)), p2)
      
     def report(self):
+        if self.wins == 0 or self.losses == 0:
+            return ('zero division error')
         win_rate = (self.wins/(self.wins + self.losses))*100
         return f'\n-----{self.name}-----\n~Total wins: {self.wins}\n~Total losses: {self.losses}\n~Total ties: {self.ties}\n~Win rate: {win_rate:.2f}%\n------------------'
+
 
 main()
