@@ -20,8 +20,8 @@ class Deck():
         self.ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
         self.current_deck = []
     
-    def check_deck(self):
-        return self.current_deck
+    #def check_deck(self):
+     #   return self.current_deck
     
     def shuffle(self):
         if len(self.current_deck) == 0:
@@ -30,7 +30,6 @@ class Deck():
 
     def generate_deck(self):
         self.current_deck = [Card(rank,suit) for rank in self.ranks for suit in self.suits]
-        
         
     def deal_card(self):
         return self.current_deck.pop()
@@ -41,8 +40,8 @@ class Card():
         self.rank = rank
         self.suit = suit
     
-    def check_card(self):
-        return f'{self.rank} of {self.suit}'
+    #def check_card(self):
+    #    return f'{self.rank} of {self.suit}'
 
     def __repr__(self):
         num_to_name = {11: 'Jack', 12: 'Queen', 13: 'King', 14: 'Ace'}
@@ -57,7 +56,7 @@ class Hand():
 
     def decide_type(self):
         # From highest value to lowest to make sure wins are correct
-
+        
         if self.is_royal() and self.is_flush():
             return ('Royal Flush', 'n/a')
 
@@ -80,10 +79,7 @@ class Hand():
         return ('High Card', self.find_high_card(0))
 
     def is_flush(self):
-        suit_count = self.make_sorted_value_dict(False)
-        if len(suit_count) == 1:
-            return True
-        return False
+        return len(self.make_sorted_value_dict(False)) == 1
 
     def is_royal(self):
         royal_cards = [10, 11, 12, 13, 14]

@@ -31,14 +31,8 @@ def is_royal(hand):
     return True
 
 def is_straight(hand):
-    sorted_hand = sorted(hand, key=lambda x: ranks.index(x[0]))
-    prev_card_rank = sorted_hand[0][0]
-    for card in sorted_hand[1:]:
-        if ranks.index(card[0]) == ranks.index(prev_card_rank) + 1:
-            prev_card_rank = card[0]
-        else:
-            return False
-    return True
+    rank_count = {ranks.index(card[0]) for card in hand}
+    return (max(rank_count) - min(rank_count)+1) == len(hand) and len(rank_count) == len(hand)
     
 def is_flush(hand):
     return len(set([card[1] for card in hand])) == 1
@@ -49,7 +43,7 @@ def has_pairs(hand):
 def find_pairs(hand):
     r_count =  make_sorted_value_dict(hand, True)
     if len(r_count) == 2:
-        print(r_count)
+    
         if r_count[0][1] == 3 and r_count[1][1] == 2:
             return('Full House', r_count[0][0], r_count[1][0])
         return ('Four of a Kind', r_count[0][0])
@@ -121,8 +115,7 @@ def complete_task(hand1, hand2):
     h2_type = decide_type(hand2)
     index = 0
     # Comp = comparison res = results
-    print('------------------')
-    print(h1_type, h2_type)
+    
     type_comp_res = decide_win(types.index(h1_type[0]), types.index(h2_type[0]))
     
 
