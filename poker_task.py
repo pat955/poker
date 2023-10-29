@@ -13,7 +13,7 @@ def main():
         else:
             loss += 1
 
-    print(f'-----------\n~ Wins: {wins}\n~ Loss = {loss}\n-----------')
+    print(f'-----------\n~ Wins: {wins}\n~ Loss: {loss}\n-----------')
     
 
 ranks = ['n/a', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
@@ -43,18 +43,18 @@ def has_pairs(hand):
 def find_pairs(hand):
     r_count =  make_sorted_value_dict(hand, True)
     if len(r_count) == 2:
-    
         if r_count[0][1] == 3 and r_count[1][1] == 2:
             return('Full House', r_count[0][0], r_count[1][0])
         return ('Four of a Kind', r_count[0][0])
+
     elif len(r_count) == 3:
         if r_count[0][1] == 2 and r_count[1][1] == 2:
             return ('Two Pairs', r_count[0][0], r_count[1][0])
         return ('Three of a Kind', r_count[0][0])
+
     elif len(r_count) == 4:
         return ('One Pair', r_count[0][0])
-    else:
-        raise Exception('something went wrong', hand)
+    raise Exception('something went wrong', hand)
 
 def find_high_card(hand, index=0):
     return sort_hand(hand, True)[index][0]
@@ -68,9 +68,9 @@ def make_sorted_value_dict(hand, rank_or_suit=True):
         rank_count = {}
         for card in hand:
             if card[0] not in rank_count:
-                rank_count[card[0]] = 1
-            else:
-                rank_count[card[0]] += 1
+                rank_count[card[0]] = 0
+            rank_count[card[0]] += 1
+
         return tuple(sorted(rank_count.items(), key=lambda item: (item[1], item[0]), reverse=True))
 
     suit_count = {}
