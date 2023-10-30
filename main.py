@@ -1,11 +1,14 @@
 import random
-import copy
-# -type returns winning card instead of rank number for cleaner interface
+# Note to self: edit -type returns winning card instead of rank number for cleaner interface
+# Note to self: add funds_added_each_round=100 for poker class
+# Note to self: search why deck=Deck() works but deck, ... super().__init__(deck) does not
+# Note to self: check if raisee works as intended
 def main():
     p1 = Player('Player 1', 0)
     p2 = Player('Player 2', 0)
+    
     table = Table()
-    simple_poker = Poker('Simple Poker', [p1, p2], table)
+    simple_poker = Poker('Simple Poker', [p1, p2], table, 3)
     table.add_game(simple_poker)
     
     simple_poker.play_2p(p1, p2)
@@ -163,7 +166,7 @@ class Hand():
         raise Exception('Something went wrong, remember to raise has_pairs() first')
 
     def make_sorted_hand(self, reverse=False):
-        # In case a sorted by rank hand is neeeded but not a suit or rank count
+        # returns a sorted hand, lowest to highest unless reverse = True
         return sorted(self.cards, key=lambda card: card.rank, reverse=reverse)
 
     def make_sorted_value_dict(self, rank_or_suit=True):
@@ -190,22 +193,31 @@ class Table():
         self.game = game
 
     def trade(self, player):
+        """
+        Asks player for what card from table hand they would like to take, 1-5, the code will remove 1 so the index is correct.
+        you can also input 'd' if youre done trading, thats why we dont remove 1 yet because the input can be a str.
+        program tells player what they have choosen.
+        repeat for player hand except if asks 1-(length of player hand)
+        then the cards are removed and saved in table_card and player_card.
+        when we finally switch in formatted string to save space, possibly changing this soon for more readability.
+        repeat until player presses 'd'
+        """
         print('\nPress "d" when done trading.')
 
-        t_hand_index = self.game.retry_int_loop(player, 5, f'What card from table would you like? (1-5) ')
-        if t_hand_index == 'd':
+        table_hand_index = self.game.retry_int_loop(player, 5, f'What card from table would you like? (1-5) ')
+        if table_hand_index == 'd':
             return 'Done trading.'
 
-        print(f'{self.hand.cards[t_hand_index-1]} card choosen.\n')
+        print(f'{self.hand.cards[table_hand_index-1]} choosen.\n')
 
-        p_hand_index = self.game.retry_int_loop(player, len(player.hand.cards), f'What card would you like to switch out? (1-{len(player.hand.cards)}) ')
-        if p_hand_index == 'd':
+        player_hand_index = self.game.retry_int_loop(player, len(player.hand.cards), f'What card would you like to switch out? (1-{len(player.hand.cards)}) ')
+        if player_hand_index == 'd':
             return 'Done trading.'
 
-        print(f'{player.hand.cards[p_hand_index-1]} card choosen.\n')
+        print(f'{player.hand.cards[player_hand_index-1]} choosen.\n')
 
-        table_card = self.hand.cards.pop(t_hand_index-1)
-        player_card = player.hand.cards.pop(p_hand_index-1)
+        table_card = self.hand.cards.pop(table_hand_index-1)
+        player_card = player.hand.cards.pop(player_hand_index-1)
     
         
         print(f'New cards: {self.hand.add_card(player_card)}\nYour hand: {player.hand.add_card(table_card)}')
@@ -214,12 +226,13 @@ class Table():
         if redo == 'y':
             return self.trade(player)
         elif redo == 'q':
-            Poker.quit(Poker)
+            self.game.quit()
         return 'Done trading.'
 
 class Player():
     def __init__(self, name, balance=0):
-        # hand types needed to determine win by type value, hand is a hand object
+        # hand types needed to determine win by type value, hand is a hand object,
+        # currently_called so i can keep track of bets and who will get what
         self.hand_types = ['High Card', 'One Pair', 'Two Pairs', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush', 'Royal Flush']
         self.hand = Hand()
         self.name = name
@@ -236,12 +249,15 @@ class Player():
         self.balance += amount
 
     def able_to_play(self):
+        #checks if player is even able to play, quits, shouldnt happen unless no funds are added each round
         if self.balance == 0:
             print('Unable to play.')
             self.quit()
         return True
 
     def report(self):
+        # Returns formatted str of name, wins, losses, ties and winrate but if wins and losses are 0,
+        # does not calculate winrate to avoid zero devision error
         if self.wins == 0 and self.losses == 0:
             return f'\n-----{self.name}-----\n~Total wins: {self.wins}\n~Total losses: {self.losses}\n~Total ties: {self.ties}\n~Win rate unable to calculate\n------------------'
         
@@ -254,14 +270,18 @@ class Card_Game():
         self.name = name
         self.deck = deck 
 
-    def create_new_deck(self):
+    def create_shuffled_deck(self):
+        # Create deck object, generate it and shuffle it to avoid reusing code.
         self.deck = Deck()
         self.deck.generate_deck()
         self.deck.shuffle()
 
 
 class Poker(Card_Game):
-    def __init__(self, name, players, table, deck=Deck(), rounds=5):
+    def __init__(self, name, players, table, rounds=5, deck=Deck()):
+        #Name to maybe print out if im making variations of poker, player list can be useful when making more than 2 player games
+        #table for trades, deck for obvious reasons i hope and rounds that default to 5 if nothing is else is told.
+        #pool for funds that will be awarded to winner and current_round_active tells you if a round is ongoing.
         super().__init__(name, deck)
         self.table = table
         self.players = players
@@ -270,17 +290,20 @@ class Poker(Card_Game):
         self.current_round_active = False
     
     def quit(self):
-        
+        # Prints a report for all players and exits program, very useful for debugging.
         for p in self.players:
             print(p.report())
         print('Quitting...')
         exit()
     
     def poker_populate(self, player, amount=5):
+        # Deal cards for player
         for i in range(amount):
             player.hand.cards.append(self.deck.deal_card())
 
     def exe_for_all(self, players, funcs):
+        # Inputted functions will be executed for all players in list as well as table if in player list.  
+        # Format: {Object.function: args} have NOT tested if it works with multiple arguments, does *args work?
         for func, args in funcs.items():
             for p in players:
                 if args == None:
@@ -289,6 +312,15 @@ class Poker(Card_Game):
                     func(p, args)
 
     def play_2p(self, p1, p2):
+        """
+        Informs player, for everyround, funds will be added, hands will be cleared and checked if their able to play. 
+        A new shuffled ready for use deck will be created. then each player will get 3 hards to start and start poker intros.
+        Then the main poker "loop" will start, if any of the 2 players fold the round will stop and move on to the next.
+        
+        Formatting is simply '=' times x amount to make it look nice.
+        Prints each player hand type and hand. Prints who won.
+        
+        """
         print('---Quit anytime by pressing "q".---')   
 
         for i in range(self.rounds):
@@ -296,7 +328,7 @@ class Poker(Card_Game):
             print(f'--------\nRound {i+1}!\n--------')
 
             self.exe_for_all([p1, p2], {Player.add_funds: 100, Player.clear_hand: None, Player.able_to_play: None})
-            self.create_new_deck()
+            self.create_shuffled_deck()
         
             self.poker_populate(self.table)
             self.exe_for_all([p1,p2], {self.poker_populate:3, self.poker_round_intro: None})
@@ -316,10 +348,13 @@ class Poker(Card_Game):
             print(self.compare_hand_types(p1, p2), '\n')  
 
     def poker_round_intro(self, player):
+        # Prints table cards, and player hand.
+        # Offers to trade, if y start trade, if not continue and ask if player want to call.
+
         print(f'\nTable cards: \n{self.table.hand}')
         print(f'\n{player.name}\n{player.hand}')
         
-        trade_input = self.retry_loop(player, ['y', 'n'], f'\nDo you want to trade? ')
+        trade_input = self.retry_loop(player, ['y', 'n'], f'\nDo you want to trade? (y/n) ')
 
         if trade_input == 'y':
             print(self.table.trade(player))
@@ -330,6 +365,9 @@ class Poker(Card_Game):
             self.call(player)
 
     def after_intros(self, player, other_player):
+        # Prints table and player hand, offers to trade this time with the player having more cards
+        # after possible trade continues and if player has enough funds to raise other player is asked if they
+        # want to raise, fold or do nothing. 
         print(f'\nTable cards: {self.table.hand}')
         print(f'\n{player.name}\n{player.hand.cards}')
 
@@ -352,9 +390,9 @@ class Poker(Card_Game):
                 self.fold(player, other_player)
                 
     def retry_loop(self, player, valid_answers, input_message):
+        # returns input only if in valid answers or 'q'.
         player_input = input(input_message)
-        if player_input == 'q':
-                self.quit()
+        
         while player_input not in valid_answers:
             if player_input == 'q':
                 self.quit()
@@ -363,10 +401,13 @@ class Poker(Card_Game):
         return player_input
 
     def retry_int_loop(self, player, valid_range, input_message):
+        # Reccursion! integer loop is more complex than a str so i used reccursion.
+        # 'd' input is more guarded so that by chance its more difficult to return d when not i a trade setting
+        # it will try to convert str input to int, if unable, call function again, if it can check if in valid range.
         player_input = input(input_message)
 
         if player_input == 'q':
-            quit(self)
+            self.quit()
 
         elif player_input == 'd' and valid_range in [1,2,3,4,5]:
             return 'd'
@@ -379,7 +420,7 @@ class Poker(Card_Game):
             return self.retry_int_loop(player, valid_range, input_message)
     
     def compare_val(self, first_val, other_val):
-        # registers win and loss but in case of tie, returns false so other conditions can be set up outside.
+        # Compares two values, if tie, returns tie, if first val wins, returns true.
         if first_val == other_val:
             return 'Tie'
         return first_val > other_val
@@ -415,6 +456,8 @@ class Poker(Card_Game):
         return self.next_card_loop(p1, p2)
 
     def next_card_loop(self, p1, p2):
+        # Used in case of between hand types and hand type value, compares highest card until not a tie
+        # If it reaches the end then calls tie function. it is very rare to see a true tie.
         index = 0
         while self.compare_val(p1.hand.find_high_card(index), p2.hand.find_high_card(index))  == 'Tie':
             if index == 4:
@@ -423,13 +466,15 @@ class Poker(Card_Game):
         return self.win(self.compare_val(p1.hand.find_high_card(index), p2.hand.find_high_card(index)), p1, p2)
      
     def win(self, win, p1, p2):
+        # arg win is either true or false, true makes the first player the winner.
+        # calculates profit, add to their balance as well as resets pool and currently called for both players
         if win:
             winner, loser = p1, p2
         else:
             winner, loser = p2, p1
 
-        won_money =  self.pool - winner.currently_called 
-        return_message = (f'{winner.name} wins!\nThey won: {won_money}!')
+        profit =  self.pool - winner.currently_called 
+        return_message = (f'{winner.name} wins!\nThey won: {profit}!')
 
         winner.balance += self.pool
         self.pool = 0 
@@ -440,6 +485,7 @@ class Poker(Card_Game):
         return return_message
         
     def tie(self, p1, p2):
+        #resets pool, returns and resets called funds. Also adds ties for each player. 
         self.pool = 0 
         p1.balance += p1.currently_called 
         p1.currently_called = 0
@@ -451,16 +497,13 @@ class Poker(Card_Game):
         p2.ties += 1
         
     def call(self, player):
+        # asks player for amount and adds that to pool
         call_message = f'Your balance: {player.balance}\nHow much would you like to call?: '
         call_input = self.retry_int_loop(player, player.balance, call_message)
         self.add_to_pool(player, call_input)
-    
-    def add_to_pool(self, player, amount):
-        player.balance -= amount
-        player.currently_called += amount
-        self.pool += amount
 
     def able_to_raise(self, player, other_player):
+        # if player balance is more than the otherplayer has called, they can raise
         return player.balance >= other_player.currently_called 
 
     def raisee(self, player, other_player):
@@ -468,15 +511,21 @@ class Poker(Card_Game):
         raise_input = self.retry_int_loop(player, matched_balance, f'Balance after matching: {matched_balance}.\nHow much would you like to raise (0 is valid)? ')
         
         self.add_to_pool(player, raise_input + other_player.currently_called)
+    
+    def fold(self, player, other_player):
+        # When player inputs 'f', prints info and player balance, ties players and ends round
+        print(f'\n{player.name} folded!\nAll funds returned.\n{player.name} balance: {player.balance}\n{other_player.name} balance: {other_player.balance}\n')
+        self.tie(player, other_player)
+        self.end_round()
+
+    def add_to_pool(self, player, amount):
+        # Takes away funds and adds to pool, used for call and raise
+        player.balance -= amount
+        player.currently_called += amount
+        self.pool += amount
 
     def end_round(self):
         self.current_round_active = False
-
-    def fold(self, player, other_player):
-        print(f'\n{player.name} folded!\nAll funds returned.\n{player.name} balance: {player.balance}\n{other_player.name} balance: {other_player.balance}\n')
-        
-        self.tie(player, other_player)
-        self.end_round()
     
     def devide_pool(self, players):
         # In case of a total tie, this could be useful?
@@ -484,7 +533,5 @@ class Poker(Card_Game):
 
         for p in players:
             p.balance += devided_pool
-
-
 
 main()
