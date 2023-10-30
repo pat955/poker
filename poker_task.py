@@ -13,7 +13,7 @@ def main():
         else:
             loss += 1
 
-    print(f'-----------\n~ Wins: {wins}\n~ Loss: {loss}\n-----------')
+    print(f'-------------\n~ Wins: {wins}\n~ Loss: {loss}\n~ Total: {wins+loss}\n-------------')
     
 
 ranks = ['n/a', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
@@ -64,22 +64,20 @@ def sort_hand(hand, reverse=False):
   
 def make_sorted_value_dict(hand, rank_or_suit=True):
     # count amount of ranks or suits in a dictionary format
-    if rank_or_suit == True:
-        rank_count = {}
-        for card in hand:
-            if card[0] not in rank_count:
-                rank_count[card[0]] = 0
-            rank_count[card[0]] += 1
-
-        return tuple(sorted(rank_count.items(), key=lambda item: (item[1], item[0]), reverse=True))
-
-    suit_count = {}
+    count = {}
     for card in hand:
-        if card[1] not in suit_count:
-            suit_count[card[1]] = 1
+        if rank_or_suit:
+            typ = card[0]
         else:
-            suit_count[card[1]] += 1 
-    return tuple(sorted(suit_count.items(), key=lambda item: (item[1], item[0]), reverse=True))
+            typ = card[1]
+
+        if typ not in count:
+            count[typ] = 0
+        count[typ] += 1
+
+    return tuple(sorted(count.items(), key=lambda item: (item[1], item[0]), reverse=True))
+
+
 
 def decide_type(hand):
     if is_royal(hand) and is_flush(hand):
