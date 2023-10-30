@@ -2,8 +2,9 @@ import random
 # Note to self: edit -type returns winning card instead of rank number for cleaner interface
 # Note to self: add funds_added_each_round=100 for poker class
 # Note to self: search why deck=Deck() works but deck, ... super().__init__(deck) does not
-# Note to self: check if raisee works as intended
+# Note to self: check if raisee works as intended, sort cards in hand automatically. 
 def main():
+
     p1 = Player('Player 1', 0)
     p2 = Player('Player 2', 0)
     
@@ -28,9 +29,9 @@ class Deck():
         return self.current_deck
     
     def shuffle(self):
-        # Returns nothing but shuffles current deck
         if len(self.current_deck) == 0:
             raise Exception('Can\'t shuffle empty deck.') 
+
         random.shuffle(self.current_deck)
 
     def generate_deck(self):
@@ -65,7 +66,7 @@ class Hand():
         self.printable_cards = ''
 
     def __repr__(self):
-        
+        # when printed shows up as | Jack ♥ || 1 ♣ |... __str__ did not work, im unsure why
         if self.printable_cards == '':
             for card in self.cards:
                 self.printable_cards += f'| {card} |'
@@ -231,8 +232,8 @@ class Table():
 
 class Player():
     def __init__(self, name, balance=0):
-        # hand types needed to determine win by type value, hand is a hand object,
-        # currently_called so i can keep track of bets and who will get what
+        # hand types needed to determine win by type value
+        # currently_called so i can keep track of bets and who will get what 
         self.hand_types = ['High Card', 'One Pair', 'Two Pairs', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush', 'Royal Flush']
         self.hand = Hand()
         self.name = name
@@ -249,7 +250,7 @@ class Player():
         self.balance += amount
 
     def able_to_play(self):
-        #checks if player is even able to play, quits, shouldnt happen unless no funds are added each round
+        # checks if player is even able to play, quits, shouldnt happen unless no funds are added each round
         if self.balance == 0:
             print('Unable to play.')
             self.quit()
@@ -279,9 +280,9 @@ class Card_Game():
 
 class Poker(Card_Game):
     def __init__(self, name, players, table, rounds=5, deck=Deck()):
-        #Name to maybe print out if im making variations of poker, player list can be useful when making more than 2 player games
-        #table for trades, deck for obvious reasons i hope and rounds that default to 5 if nothing is else is told.
-        #pool for funds that will be awarded to winner and current_round_active tells you if a round is ongoing.
+        # Name to maybe print out if im making variations of poker, player list can be useful when making more than 2 player games
+        # table for trades, deck for obvious reasons i hope and rounds that default to 5 if nothing is else is told.
+        # pool for funds that will be awarded to winner and current_round_active tells you if a round is ongoing.
         super().__init__(name, deck)
         self.table = table
         self.players = players
@@ -485,7 +486,7 @@ class Poker(Card_Game):
         return return_message
         
     def tie(self, p1, p2):
-        #resets pool, returns and resets called funds. Also adds ties for each player. 
+        # resets pool, returns and resets called funds. Also adds ties for each player. 
         self.pool = 0 
         p1.balance += p1.currently_called 
         p1.currently_called = 0

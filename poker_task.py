@@ -41,6 +41,7 @@ def has_pairs(hand):
     return (len(make_sorted_value_dict(hand, True)) != 5)
 
 def find_pairs(hand):
+    # returns the found pair, only call if has pairs == True
     r_count =  make_sorted_value_dict(hand, True)
     if len(r_count) == 2:
         if r_count[0][1] == 3 and r_count[1][1] == 2:
@@ -101,35 +102,32 @@ def decide_type(hand):
 
     return ('High Card', find_high_card(hand, 0))
 
-def decide_win(value1, value2):
-    
-    if value1 > value2:
-        return True
-    elif value1 == value2:
-        return False
+def compare_values(value1, value2):
+    if value1 == value2:
+            return 'Tie'
+    return value1 > value2
 
 def complete_task(hand1, hand2):
     h1_type = decide_type(hand1)
     h2_type = decide_type(hand2)
     index = 0
-    # Comp = comparison res = results
     
-    type_comp_res = decide_win(types.index(h1_type[0]), types.index(h2_type[0]))
+    type_comparison_result = compare_values(types.index(h1_type[0]), types.index(h2_type[0]))
     
 
-    if type_comp_res == False:
-        sec_comp_res = decide_win(ranks.index(h1_type[1]), ranks.index(h2_type[1]))
+    if type_comparison_result == 'Tie':
+        second_comparison_result = compare_values(ranks.index(h1_type[1]), ranks.index(h2_type[1]))
 
-        if sec_comp_res == False :
-            high_card_comp_res = decide_win(find_high_card(hand1, index)[0], find_high_card(hand2, index)[0])
+        if second_comparison_result == 'Tie':
+            high_card_comparison_result = compare_values(find_high_card(hand1, index)[0], find_high_card(hand2, index)[0])
 
-            while high_card_comp_res == False:
+            while high_card_comparison_result == 'Tie':
                 
                 index += 1
 
-            return high_card_comp_res
-        return sec_comp_res
-    return type_comp_res
+            return high_card_comparison_result
+        return second_comparison_result
+    return type_comparison_result
 
     
 main()
