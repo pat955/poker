@@ -1,15 +1,13 @@
 import random
 # Note to self: edittype returns winning card instead of rank number for cleaner interface.
-# add funds_added_each_round=100 for poker class.
-# why does deck=Deck() work but deck, ... super().__init__(deck) does not.
-# check if raisee works as intended, sort cards in hand automatically. 
+# sort cards in hand automatically. 
 def main():
 
     p1 = Player('Player 1', 0)
     p2 = Player('Player 2', 0)
     
     table = Table()
-    simple_poker = Poker('Simple Poker', [p1, p2], table, 5)
+    simple_poker = Poker('Simple Poker', [p1, p2], table, 5, 100)
     table.add_game(simple_poker)
     
     simple_poker.play_2p(p1, p2)
@@ -67,9 +65,8 @@ class Hand():
         return self.printable_cards
     
     def add_card(self, card):
-        # It should work without return but doesnt for some reason
         self.cards.append(card)
-        return self.cards
+       
 
     def clear(self):
         self.cards = []
@@ -208,16 +205,21 @@ class Table():
 
         table_card = self.hand.cards.pop(table_hand_index-1)
         player_card = player.hand.cards.pop(player_hand_index-1)
-    
-        
-        print(f'New cards: {self.hand.add_card(player_card)}\nYour hand: {player.hand.add_card(table_card)}')
-        return 'Done trading.'
 
-        """redo = self.game.retry_loop(player, ['y', 'n', 'd'], f'\nWould you like to trade more? (y/n) ')
+        player.hand.add_card(table_card)
+        self.hand.add_card(player_card)
+        
+        print(f'New cards: {self.hand}\nYour hand: {player.hand}')
+        return 'Done trading.' 
+
+        """
+        redo = self.game.retry_loop(player, ['y', 'n', 'd'], f'\nWould you like to trade more? (y/n) ')
 
         if redo == 'y':
             return self.trade(player)
-        return 'Done trading.'"""
+        return 'Done trading.'
+        """
+    
 
 class Player():
     def __init__(self, name, balance=0):
@@ -268,12 +270,13 @@ class Card_Game():
 
 
 class Poker(Card_Game):
-    def __init__(self, name, players, table, rounds=5, deck=Deck()):
+    def __init__(self, name, players, table, rounds=5, funds_added_each_round=100, deck=Deck()):
         # Name to maybe print out if im making variations of poker, player list can be useful when making more than 2 player games
         # table for trades, deck for obvious reasons i hope and rounds that default to 5 if nothing is else is told.
         # pool for funds that will be awarded to winner and current_round_active tells you if a round is ongoing.
         super().__init__(name, deck)
         self.table = table
+        self.funds_added_each_round = funds_added_each_round
         self.players = players
         self.pool = 0
         self.rounds = rounds
@@ -319,7 +322,7 @@ class Poker(Card_Game):
             self.current_round_active = True
             print(f'--------\nRound {i+1}!\n--------')
 
-            self.call_for_all([p1, p2], {Player.add_funds: 100, Player.clear_hand: None, Player.able_to_play: None})
+            self.call_for_all([p1, p2], {Player.add_funds: self.funds_added_each_round, Player.clear_hand: None, Player.able_to_play: None})
             self.create_shuffled_deck()
 
             self.table.hand.clear()
@@ -342,11 +345,15 @@ class Poker(Card_Game):
             print(f'\n{p1.hand.decide_type()[0]} {p1.hand}\n{formatting}VS{formatting}\n{p2.hand.decide_type()[0]} {p2.hand}\n\n')
             print(self.compare_hand_types(p1, p2), '\n')  
 
+    def player_switch(self):
+        print('\n---------------------\n'*4)
+
+
     def poker_round_intro(self, player):
         # Prints table cards, and player hand.
         # Offers to trade, if y start trade, if not continue and ask if player want to call.
 
-        print(f'\nTable cards:\n{self.table.hand}')
+        print(f'Table cards:\n{self.table.hand}')
         print(f'\n{player.name}\n{player.hand}')
         
         trade_input = self.retry_loop(player, ['y', 'n'], f'\nDo you want to trade? (y/n) ')
@@ -358,12 +365,14 @@ class Poker(Card_Game):
 
         if player_input == 'y':   
             self.call(player)
+        self.player_switch()
+
 
     def after_intros(self, player, other_player):
         # Prints table and player hand, offers to trade this time with the player having more cards
         # after possible trade continues and if player has enough funds to raise other player is asked if they
         # want to raise, fold or do nothing. 
-        print(f'\nTable cards:\n{self.table.hand}')
+        print(f'Table cards:\n{self.table.hand}')
         print(f'\n{player.name}\n{player.hand}')
 
         trade_input = self.retry_loop(player, ['y', 'n'], f'\nDo you want to trade? (y/n) ')
@@ -384,7 +393,7 @@ class Poker(Card_Game):
             player_input = self.retry_loop(player, ['f', 'n'], '\nFold or do nothing? (f/n) ' )
             if player_input == 'f':
                 self.fold(player, other_player)
-    
+        self.player_switch()
                 
     def retry_loop(self, player, valid_answers, input_message):
         # returns input only if in valid answers or 'q'.
@@ -506,7 +515,7 @@ class Poker(Card_Game):
 
     def raisee(self, player, other_player):
         matched_balance = player.balance - other_player.currently_called
-        raise_input = self.retry_int_loop(player, matched_balance, f'Balance after matching: {matched_balance}.\nHow much would you like to raise (0 is valid)? ')
+        raise_input = self.retry_int_loop(player, matched_balance, f'Balance after matching: {matched_balance}.\nHow much would you like to raise (0 - {matched_balance})? ')
         
         self.add_to_pool(player, raise_input + other_player.currently_called)
     
