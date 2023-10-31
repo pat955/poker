@@ -1,15 +1,15 @@
 import random
-# Note to self: edit -type returns winning card instead of rank number for cleaner interface
-# Note to self: add funds_added_each_round=100 for poker class
-# Note to self: search why deck=Deck() works but deck, ... super().__init__(deck) does not
-# Note to self: check if raisee works as intended, sort cards in hand automatically. 
+# Note to self: edittype returns winning card instead of rank number for cleaner interface.
+# add funds_added_each_round=100 for poker class.
+# why does deck=Deck() work but deck, ... super().__init__(deck) does not.
+# check if raisee works as intended, sort cards in hand automatically. 
 def main():
 
     p1 = Player('Player 1', 0)
     p2 = Player('Player 2', 0)
     
     table = Table()
-    simple_poker = Poker('Simple Poker', [p1, p2], table, 3)
+    simple_poker = Poker('Simple Poker', [p1, p2], table, 5)
     table.add_game(simple_poker)
     
     simple_poker.play_2p(p1, p2)
@@ -37,23 +37,18 @@ class Deck():
     def generate_deck(self):
         self.current_deck = [Card(rank,suit) for rank in self.ranks for suit in self.suits]
         
-    def deal_card(self):
-        # pop() removes card but also returns it for use
-        return self.current_deck.pop()
+    def deal_card(self, index=-1):
+        return self.current_deck.pop(index)
 
 
 class Card():
     def __init__(self, rank, suit):
         self.rank = rank
         self.suit = suit
-    
-    def check_card(self):
-        return f'{self.rank} of {self.suit}'
 
     def __repr__(self):
         # Everytime a card is printed it will show up in a "rank of suit" format,
         # if any of the cards are royal itll use their names instead of value index
-
         num_to_name = {11: 'Jack', 12: 'Queen', 13: 'King', 14: 'Ace'}
         if self.rank in num_to_name:
             return f'{num_to_name[self.rank]} {self.suit}'
@@ -63,17 +58,16 @@ class Card():
 class Hand():
     def __init__(self): 
         self.cards = []
-        self.printable_cards = ''
 
     def __repr__(self):
         # when printed shows up as | Jack ♥ || 1 ♣ |... __str__ did not work, im unsure why
-        if self.printable_cards == '':
-            for card in self.cards:
-                self.printable_cards += f'| {card} |'
+        self.printable_cards = ''
+        for card in self.cards:
+            self.printable_cards += f'| {card} |'
         return self.printable_cards
     
-    
     def add_card(self, card):
+        # It should work without return but doesnt for some reason
         self.cards.append(card)
         return self.cards
 
@@ -90,17 +84,17 @@ class Hand():
             return ('Straight Flush', 'n/a')
 
         elif self.has_pairs():
-            results = self.find_pairs()
-            if results[0] == 'Four of a Kind' or results[0] == 'Full House':
-                return results
+            pair_results = self.find_pairs()
+            if pair_results[0] == 'Four of a Kind' or pair_results[0] == 'Full House':
+                return pair_results
             elif not self.is_flush() and not self.is_straight():
                 """ 
-                Ive set this up so that itll check that the hand isnt a flush or straight before returning pair results
+                Ive set this up so that itll check that the hand isnt a flush or straight before returning pair pair_results
                 Python ignores reused elif statement so i have to set it up this way for my current skill level
                 It doesnt look the most clean but i can only think of doing this with a dictionary
                 but i dont have the knowledge to execute that effectively.
                 """
-                return results
+                return pair_results
 
         elif self.is_flush():
             return ('Flush', 'n/a')
@@ -111,17 +105,12 @@ class Hand():
         return ('High Card', self.find_high_card(0))
 
     def is_flush(self):
-        # returns bool based on if the theres only one type of suit in hand
         return len(self.make_sorted_value_dict(False)) == 1
 
     def is_royal(self):
-        royal_cards = [10, 11, 12, 13, 14]
-        for card in self.cards:
-            if card.rank in royal_cards:
-                royal_cards.remove(card.rank)
-            else:
-                return False
-        return True
+        hand_ranks = [card.rank for card in self.cards]
+        royal_ranks = [10, 11, 12, 13, 14]
+        return hand_ranks == royal_ranks
 
     def is_straight(self):
         """
@@ -148,7 +137,6 @@ class Hand():
         return len(self.make_sorted_value_dict(True)) != 5
     
     def find_pairs(self):
-        # read length of rank count ex. {11:3, 12:1, 9:1} to tell what type it is 
         rank_count = self.make_sorted_value_dict(True)
 
         if len(rank_count) == 2:
@@ -203,32 +191,33 @@ class Table():
         when we finally switch in formatted string to save space, possibly changing this soon for more readability.
         repeat until player presses 'd'
         """
-        print('\nPress "d" when done trading.')
+        print('\nPress "d" when done trading. Only one trade for now!')
+         
 
         table_hand_index = self.game.retry_int_loop(player, 5, f'What card from table would you like? (1-5) ')
         if table_hand_index == 'd':
             return 'Done trading.'
 
-        print(f'{self.hand.cards[table_hand_index-1]} choosen.\n')
+        print(f'\n{self.hand.cards[table_hand_index-1]} choosen.\n')
 
         player_hand_index = self.game.retry_int_loop(player, len(player.hand.cards), f'What card would you like to switch out? (1-{len(player.hand.cards)}) ')
         if player_hand_index == 'd':
             return 'Done trading.'
 
-        print(f'{player.hand.cards[player_hand_index-1]} choosen.\n')
+        print(f'\n{player.hand.cards[player_hand_index-1]} choosen.\n')
 
         table_card = self.hand.cards.pop(table_hand_index-1)
         player_card = player.hand.cards.pop(player_hand_index-1)
     
         
         print(f'New cards: {self.hand.add_card(player_card)}\nYour hand: {player.hand.add_card(table_card)}')
-        redo = self.game.retry_loop(player, ['y','n', 'q'], f'\nWould you like to trade more? (y/n) ')
+        return 'Done trading.'
+
+        """redo = self.game.retry_loop(player, ['y', 'n', 'd'], f'\nWould you like to trade more? (y/n) ')
 
         if redo == 'y':
             return self.trade(player)
-        elif redo == 'q':
-            self.game.quit()
-        return 'Done trading.'
+        return 'Done trading.'"""
 
 class Player():
     def __init__(self, name, balance=0):
@@ -302,12 +291,14 @@ class Poker(Card_Game):
         for i in range(amount):
             player.hand.cards.append(self.deck.deal_card())
 
-    def exe_for_all(self, players, funcs):
+    def call_for_all(self, players, funcs):
         # Inputted functions will be executed for all players in list as well as table if in player list.  
-        # Format: {Object.function: args} have NOT tested if it works with multiple arguments, does *args work?
+        # Works with multiple arguments if put in a list
         for func, args in funcs.items():
             for p in players:
-                if args == None:
+                if type(args) == list:
+                    func(p, *args)
+                elif args == None:
                     func(p)
                 else:
                     func(p, args)
@@ -328,14 +319,15 @@ class Poker(Card_Game):
             self.current_round_active = True
             print(f'--------\nRound {i+1}!\n--------')
 
-            self.exe_for_all([p1, p2], {Player.add_funds: 100, Player.clear_hand: None, Player.able_to_play: None})
+            self.call_for_all([p1, p2], {Player.add_funds: 100, Player.clear_hand: None, Player.able_to_play: None})
             self.create_shuffled_deck()
-        
+
+            self.table.hand.clear()
             self.poker_populate(self.table)
-            self.exe_for_all([p1,p2], {self.poker_populate:3, self.poker_round_intro: None})
-
-            self.exe_for_all([p1,p2], {self.poker_populate:1, self.poker_round_intro: None})
-
+            self.call_for_all([p1, p2], {self.poker_populate:3, self.poker_round_intro: None})
+            
+            self.call_for_all([p1, p2], {self.poker_populate:1})
+            
             self.after_intros(p1, p2)
             if self.current_round_active == False:
                 continue
@@ -343,6 +335,8 @@ class Poker(Card_Game):
             self.after_intros(p2, p1)
             if self.current_round_active == False:
                 continue
+
+            self.call_for_all([p1, p2], {self.poker_populate:1})
 
             formatting = '='*(len(f'{p1.hand.decide_type()[0]}{str(p1.hand)}')//2)
             print(f'\n{p1.hand.decide_type()[0]} {p1.hand}\n{formatting}VS{formatting}\n{p2.hand.decide_type()[0]} {p2.hand}\n\n')
@@ -352,7 +346,7 @@ class Poker(Card_Game):
         # Prints table cards, and player hand.
         # Offers to trade, if y start trade, if not continue and ask if player want to call.
 
-        print(f'\nTable cards: \n{self.table.hand}')
+        print(f'\nTable cards:\n{self.table.hand}')
         print(f'\n{player.name}\n{player.hand}')
         
         trade_input = self.retry_loop(player, ['y', 'n'], f'\nDo you want to trade? (y/n) ')
@@ -369,19 +363,15 @@ class Poker(Card_Game):
         # Prints table and player hand, offers to trade this time with the player having more cards
         # after possible trade continues and if player has enough funds to raise other player is asked if they
         # want to raise, fold or do nothing. 
-        print(f'\nTable cards: {self.table.hand}')
-        print(f'\n{player.name}\n{player.hand.cards}')
+        print(f'\nTable cards:\n{self.table.hand}')
+        print(f'\n{player.name}\n{player.hand}')
 
-        trade_input = self.retry_loop(player, ['y', 'n'], f'\nDo you want to trade? ')
+        trade_input = self.retry_loop(player, ['y', 'n'], f'\nDo you want to trade? (y/n) ')
 
         if trade_input == 'y':
             print(self.table.trade(player))
-        
-        if not self.able_to_raise(player, other_player):
-            player_input = self.retry_loop(player, ['f', 'n'], '\nFold or do nothing? (f/n) ' )
-            if player_input == 'f':
-                self.fold(player, other_player)
-        else:
+
+        if self.able_to_raise(player, other_player):
             player_input = self.retry_loop(player, ['r', 'f', 'n'], '\nDo you want to raise, fold or do nothing? (r/f/n) ') 
             
             if player_input == 'r':  
@@ -389,6 +379,12 @@ class Poker(Card_Game):
 
             elif player_input == 'f':
                 self.fold(player, other_player)
+
+        else:
+            player_input = self.retry_loop(player, ['f', 'n'], '\nFold or do nothing? (f/n) ' )
+            if player_input == 'f':
+                self.fold(player, other_player)
+    
                 
     def retry_loop(self, player, valid_answers, input_message):
         # returns input only if in valid answers or 'q'.
@@ -417,17 +413,18 @@ class Poker(Card_Game):
             if int(player_input) <= valid_range:
                 return int(player_input)
             return self.retry_int_loop(player, valid_range, input_message)
+            
         except:
             return self.retry_int_loop(player, valid_range, input_message)
     
-    def compare_val(self, first_val, other_val):
+    def does_val1_win(self, first_val, other_val):
         # Compares two values, if tie, returns tie, if first val wins, returns true.
         if first_val == other_val:
             return 'Tie'
         return first_val > other_val
 
     def compare_hand_types(self, p1, p2):
-        # Get results, type index to spare place
+        # Get pair_results, type index to spare place
         p1_res = p1.hand.decide_type()
         p2_res = p2.hand.decide_type()
         
@@ -435,19 +432,19 @@ class Poker(Card_Game):
         p2_type_index = p2.hand_types.index(p2_res[0])
 
         index = 0 
-        type_comp = self.compare_val(p1_type_index, p2_type_index)
+        type_comp = self.does_val1_win(p1_type_index, p2_type_index)
 
         if type(type_comp) == bool:
             return self.win(type_comp, p1, p2)
 
-        rank_comp = self.compare_val(p1_res[1], p2_res[1])
+        rank_comp = self.does_val1_win(p1_res[1], p2_res[1])
         
         if type(rank_comp) == bool:
             return self.win(rank_comp, p1, p2)
 
         elif p1_res[0] == 'Two Pairs' or p1_res[0] == 'Full House':
             
-            secondary_rank_comp = self.compare_val(p1_res[2], p2_res[2])
+            secondary_rank_comp = self.does_val1_win(p1_res[2], p2_res[2])
                 
             if type(secondary_rank_comp) == bool:
                 return self.win(secondary_rank_comp, p1, p2)
@@ -460,11 +457,11 @@ class Poker(Card_Game):
         # Used in case of between hand types and hand type value, compares highest card until not a tie
         # If it reaches the end then calls tie function. it is very rare to see a true tie.
         index = 0
-        while self.compare_val(p1.hand.find_high_card(index), p2.hand.find_high_card(index))  == 'Tie':
+        while self.does_val1_win(p1.hand.find_high_card(index), p2.hand.find_high_card(index))  == 'Tie':
             if index == 4:
                 return self.tie(p1, p2)
             index += 1
-        return self.win(self.compare_val(p1.hand.find_high_card(index), p2.hand.find_high_card(index)), p1, p2)
+        return self.win(self.does_val1_win(p1.hand.find_high_card(index), p2.hand.find_high_card(index)), p1, p2)
      
     def win(self, win, p1, p2):
         # arg win is either true or false, true makes the first player the winner.
@@ -475,7 +472,7 @@ class Poker(Card_Game):
             winner, loser = p2, p1
 
         profit =  self.pool - winner.currently_called 
-        return_message = (f'{winner.name} wins!\nThey won: {profit}!')
+        return_message = (f'{winner.name} wins! They won: {profit}!')
 
         winner.balance += self.pool
         self.pool = 0 

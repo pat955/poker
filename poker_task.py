@@ -18,7 +18,7 @@ def main():
 
 ranks = ['n/a', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
 suits = ['C', 'D', 'S', 'H']
-types = ['High Card', 'One Pair', 'Two Pairs', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush', 'Royal Flush']
+hand_types = ['High Card', 'One Pair', 'Two Pairs', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush', 'Royal Flush']
 
 
 def is_royal(hand):
@@ -79,7 +79,6 @@ def make_sorted_value_dict(hand, rank_or_suit=True):
     return tuple(sorted(count.items(), key=lambda item: (item[1], item[0]), reverse=True))
 
 
-
 def decide_type(hand):
     if is_royal(hand) and is_flush(hand):
         return ('Royal Flush', 'n/a')
@@ -112,7 +111,7 @@ def complete_task(hand1, hand2):
     h2_type = decide_type(hand2)
     index = 0
     
-    type_comparison_result = compare_values(types.index(h1_type[0]), types.index(h2_type[0]))
+    type_comparison_result = compare_values(hand_types.index(h1_type[0]), hand_types.index(h2_type[0]))
     
 
     if type_comparison_result == 'Tie':
