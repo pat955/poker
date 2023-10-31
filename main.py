@@ -346,7 +346,11 @@ class Poker(Card_Game):
             print(self.compare_hand_types(p1, p2), '\n')  
 
     def player_switch(self):
-        print('\n---------------------\n'*4)
+        button_pressed = input('Press any button when done. ')
+        print('\n---------------------\n'*7)
+        button_pressed = input('Player 2, press any button. ')
+        
+
 
 
     def poker_round_intro(self, player):
