@@ -1,16 +1,17 @@
 import random
-# Note to self: edittype returns winning card instead of rank number for cleaner interface.
-# sort cards in hand automatically. 
+
 def main():
 
     p1 = Player('Player 1', 0)
     p2 = Player('Player 2', 0)
+    p3 = Player('Player 3', 0)
+    p4 = Player('Player 4', 0)
     
     table = Table()
-    simple_poker = Poker('Simple Poker', [p1, p2], table, 5, 100)
+    simple_poker = Poker('Simple Poker', [p1, p2, p3], table, 3, 100)
     table.add_game(simple_poker)
     
-    simple_poker.play_2p(p1, p2)
+    simple_poker.play()
 
     print(p1.report())
     print(p2.report())
@@ -67,7 +68,6 @@ class Hand():
     def add_card(self, card):
         self.cards.append(card)
        
-
     def clear(self):
         self.cards = []
 
@@ -170,6 +170,7 @@ class Hand():
 
         return tuple(sorted(count.items(), key=lambda item: (item[1], item[0]), reverse=True))
 
+
 class Table():
     def __init__(self):
         self.hand = Hand()
@@ -233,6 +234,7 @@ class Player():
         self.wins = 0
         self.losses = 0
         self.ties = 0 
+        self.active = True
 
     def clear_hand(self):
         self.hand.clear()
@@ -278,10 +280,13 @@ class Poker(Card_Game):
         self.table = table
         self.funds_added_each_round = funds_added_each_round
         self.players = players
+        self.active_players = players
         self.pool = 0
         self.rounds = rounds
         self.current_round_active = False
-    
+        self.highest_caller = None
+        self.someone_has_called = False
+
     def quit(self):
         # Prints a report for all players and exits program, very useful for debugging.
         for p in self.players:
@@ -331,11 +336,7 @@ class Poker(Card_Game):
             
             self.call_for_all([p1, p2], {self.poker_populate:1})
             
-            self.after_intros(p1, p2)
-            if self.current_round_active == False:
-                continue
-
-            self.after_intros(p2, p1)
+            self.game_loop()
             if self.current_round_active == False:
                 continue
 
@@ -343,15 +344,77 @@ class Poker(Card_Game):
 
             formatting = '='*(len(f'{p1.hand.decide_type()[0]}{str(p1.hand)}')//2)
             print(f'\n{p1.hand.decide_type()[0]} {p1.hand}\n{formatting}VS{formatting}\n{p2.hand.decide_type()[0]} {p2.hand}\n\n')
-            print(self.compare_hand_types(p1, p2), '\n')  
+            print(self.compare_hand_types(), '\n')  
+    
+    def play(self):
+        print('---Quit anytime by pressing "q".---') 
+        for i in range(self.rounds):
+            self.current_round_active = True
+            self.highest_caller = None
+            self.someone_has_called = False
+            self.active_players = self.players
+            print(f'--------\nRound {i+1}!\n--------')
 
+            self.call_for_all(self.players, {Player.add_funds: self.funds_added_each_round, Player.clear_hand: None, Player.able_to_play: None})
+            self.create_shuffled_deck()
+
+            self.table.hand.clear()
+            self.poker_populate(self.table)
+
+            self.call_for_all(self.players, {self.poker_populate:3, self.poker_round_intro: None})
+            
+            self.call_for_all(self.players, {self.poker_populate:1})
+            
+            self.game_loop()
+            if self.current_round_active == False:
+                continue
+
+            self.game_loop()
+            if self.current_round_active == False:
+                continue
+
+            self.call_for_all(self.players, {self.poker_populate:1})
+
+            #formatting = '='*(len(f'{p1.hand.decide_type()[0]}{str(p1.hand)}')//2)
+            #print(f'\n{p1.hand.decide_type()[0]} {p1.hand}\n{formatting}VS{formatting}\n{p2.hand.decide_type()[0]} {p2.hand}\n\n')
+            print(self.compare_hand_types(), '\n')
+
+    def game_loop(self):
+        for player in self.players:
+            print(f'Table cards:\n{self.table.hand}')
+            print(f'\n{player.name}\n{player.hand}')
+            trade_input = self.retry_loop(player, ['y', 'n'], f'\nDo you want to trade? (y/n) ')
+
+            if trade_input == 'y':
+                print(self.table.trade(player))
+
+            if self.someone_has_called == False:
+                player_input = self.retry_loop(player, ['y','n'],'\nDo you want to call? (y/n) ')
+
+                if player_input == 'y':   
+                    self.call(player)
+                
+            elif self.able_to_raise(player):
+                player_input = self.retry_loop(player, ['r', 'f', 'n'], '\nDo you want to raise, fold or do nothing? (r/f/n) ') 
+            
+                if player_input == 'r':  
+                    self.raisee(player)
+
+                elif player_input == 'f':
+                    self.fold(player)
+            else:
+                player_input = self.retry_loop(player, ['f', 'n'], '\nFold or do nothing? (f/n) ' )
+                if player_input == 'f':
+                    self.fold(player)
+            self.player_switch()
+
+    def able_to_raise(self, player):
+        return player.balance >= self.highest_caller.currently_called
+         
     def player_switch(self):
         button_pressed = input('Press any button when done. ')
         print('\n---------------------\n'*7)
-        button_pressed = input('Player 2, press any button. ')
-        
-
-
+        button_pressed = input('Next player, press any button. ')
 
     def poker_round_intro(self, player):
         # Prints table cards, and player hand.
@@ -369,34 +432,6 @@ class Poker(Card_Game):
 
         if player_input == 'y':   
             self.call(player)
-        self.player_switch()
-
-
-    def after_intros(self, player, other_player):
-        # Prints table and player hand, offers to trade this time with the player having more cards
-        # after possible trade continues and if player has enough funds to raise other player is asked if they
-        # want to raise, fold or do nothing. 
-        print(f'Table cards:\n{self.table.hand}')
-        print(f'\n{player.name}\n{player.hand}')
-
-        trade_input = self.retry_loop(player, ['y', 'n'], f'\nDo you want to trade? (y/n) ')
-
-        if trade_input == 'y':
-            print(self.table.trade(player))
-
-        if self.able_to_raise(player, other_player):
-            player_input = self.retry_loop(player, ['r', 'f', 'n'], '\nDo you want to raise, fold or do nothing? (r/f/n) ') 
-            
-            if player_input == 'r':  
-                self.raisee(player, other_player)
-
-            elif player_input == 'f':
-                self.fold(player, other_player)
-
-        else:
-            player_input = self.retry_loop(player, ['f', 'n'], '\nFold or do nothing? (f/n) ' )
-            if player_input == 'f':
-                self.fold(player, other_player)
         self.player_switch()
                 
     def retry_loop(self, player, valid_answers, input_message):
@@ -436,98 +471,142 @@ class Poker(Card_Game):
             return 'Tie'
         return first_val > other_val
 
-    def compare_hand_types(self, p1, p2):
-        # Get pair_results, type index to spare place
-        p1_res = p1.hand.decide_type()
-        p2_res = p2.hand.decide_type()
+    def make_overall_res_dict(self):
+        overall_results = []
+
+        for player in self.active_players:
+            results = player.hand.decide_type()
+            overall_results.append((player, results))
+        return overall_results
+
+    def update_active_players(self):
+        self.active_players = []
+        for player in self.players:
+            if player.active == True:
+                self.active_players.append(player)
+
+    def deactivate_player(self, player):
+        player.active = False
+        self.lose(player)
+        self.update_active_players()
+
+    def compare_hand_types(self, index=0):
         
-        p1_type_index = p1.hand_types.index(p1_res[0])
-        p2_type_index = p2.hand_types.index(p2_res[0])
+        if len(self.active_players) == 1:
+            return self.win()
+        o_res = self.make_overall_res_dict()
 
-        index = 0 
-        type_comp = self.does_val1_win(p1_type_index, p2_type_index)
+        p1 = o_res[index][0]
+        p2 = o_res[index +1][0]
+        type_index = p1.hand_types.index(o_res[index][1][0])
+        type_index2 = p2.hand_types.index(o_res[index +1][1][0])
 
+        type_comp = self.does_val1_win(type_index, type_index2)
         if type(type_comp) == bool:
-            return self.win(type_comp, p1, p2)
-
-        rank_comp = self.does_val1_win(p1_res[1], p2_res[1])
+            if type_comp == True:
+                self.deactivate_player(p1)
+            else:
+                self.deactivate_player(p2)
+            return self.compare_hand_types()
+        
+        rank_comp = self.does_val1_win(o_res[index][1][1], o_res[index+1][1][1])
         
         if type(rank_comp) == bool:
-            return self.win(rank_comp, p1, p2)
-
-        elif p1_res[0] == 'Two Pairs' or p1_res[0] == 'Full House':
+            if type_comp == True:
+                self.deactivate_player(p1)
+            else:
+                self.deactivate_player(p2)
+            return self.compare_hand_types()
             
-            secondary_rank_comp = self.does_val1_win(p1_res[2], p2_res[2])
+        elif o_res[index][1][0] == 'Two Pairs' or o_res[index+1][1][0] == 'Full House':
+            secondary_rank_comp = self.does_val1_win(o_res[index][1][2], o_res[index+1][1][2])
                 
             if type(secondary_rank_comp) == bool:
-                return self.win(secondary_rank_comp, p1, p2)
+                if type_comp == True:
+                    self.deactivate_player(p1)
+                else:
+                    self.deactivate_player(p2)
+                return self.compare_hand_types()
+            
+            return self.next_card_loop(o_res[index][0], o_res[index+1][0])
 
-            return self.next_card_loop(p1, p2)
-
-        return self.next_card_loop(p1, p2)
+        return self.next_card_loop(o_res[index][0], o_res[index+1][0])
 
     def next_card_loop(self, p1, p2):
         # Used in case of between hand types and hand type value, compares highest card until not a tie
         # If it reaches the end then calls tie function. it is very rare to see a true tie.
         index = 0
         while self.does_val1_win(p1.hand.find_high_card(index), p2.hand.find_high_card(index))  == 'Tie':
-            if index == 4:
-                return self.tie(p1, p2)
+            if index == 4 and len(self.active_players) == 2:
+                return self.tie()
+            elif index == 4 and len(self.active_players) > 2:
+                return self.compare_hand_types(-1)
             index += 1
-        return self.win(self.does_val1_win(p1.hand.find_high_card(index), p2.hand.find_high_card(index)), p1, p2)
-     
-    def win(self, win, p1, p2):
-        # arg win is either true or false, true makes the first player the winner.
-        # calculates profit, add to their balance as well as resets pool and currently called for both players
-        if win:
-            winner, loser = p1, p2
+        return 'welp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n!!!!!!!!!!!!!!!\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!'
+    def win(self):
+        if len(self.active_players) == 1:
+            winner = self.active_players[0]
+            winner.wins += 1
+            profit =  self.pool - winner.currently_called
+            winner.balance += self.pool
+            winner.currently_called = 0 
         else:
-            winner, loser = p2, p1
+            raise Exception('oh no', len(self.active_players), self.active_players, self.pool, winner.balance)
+        self.pool = 0
+        return f'{winner.name} wins! They won: {profit}!'
 
-        profit =  self.pool - winner.currently_called 
-        return_message = (f'{winner.name} wins! They won: {profit}!')
-
-        winner.balance += self.pool
-        self.pool = 0 
-        winner.currently_called = 0 
-        loser.currently_called = 0 
-        winner.wins += 1
-        loser.losses += 1
-        return return_message
-        
-    def tie(self, p1, p2):
+    def lose(self, player):
+        player.losses += 1 
+        player.currently_called = 0
+    
+    def tie(self):
         # resets pool, returns and resets called funds. Also adds ties for each player. 
         self.pool = 0 
-        p1.balance += p1.currently_called 
-        p1.currently_called = 0
-
-        p2.balance += p2.currently_called 
-        p2.currently_called = 0
-
-        p1.ties += 1
-        p2.ties += 1
+        for player in self.active_players:
+            player.balance += player.currently_called 
+            player.currently_called = 0
+            player.ties += 1
         
     def call(self, player):
         # asks player for amount and adds that to pool
-        call_message = f'Your balance: {player.balance}\nHow much would you like to call?: '
+        self.someone_has_called = True
+        call_message = f'Your balance: {player.balance}\nHow much would you like to call? : '
         call_input = self.retry_int_loop(player, player.balance, call_message)
+
         self.add_to_pool(player, call_input)
 
-    def able_to_raise(self, player, other_player):
-        # if player balance is more than the otherplayer has called, they can raise
-        return player.balance >= other_player.currently_called 
+        if self.highest_caller == None:
+            self.highest_caller = player
 
-    def raisee(self, player, other_player):
-        matched_balance = player.balance - other_player.currently_called
+        elif self.highest_caller.currently_called < call_input:
+            self.highest_caller = player
+
+    def raisee(self, player):
+        matched_balance = player.balance - self.highest_caller.currently_called
         raise_input = self.retry_int_loop(player, matched_balance, f'Balance after matching: {matched_balance}.\nHow much would you like to raise (0 - {matched_balance})? ')
         
-        self.add_to_pool(player, raise_input + other_player.currently_called)
+        self.add_to_pool(player, raise_input + self.highest_caller.currently_called)
+        self.highest_caller = player
+
     
-    def fold(self, player, other_player):
-        # When player inputs 'f', prints info and player balance, ties players and ends round
-        print(f'\n{player.name} folded!\nAll funds returned.\n{player.name} balance: {player.balance}\n{other_player.name} balance: {other_player.balance}\n')
-        self.tie(player, other_player)
-        self.end_round()
+    def fold(self, player):
+        
+        self.deactivate_player(player)
+
+        print(f'\n{player.name} folded! Your funds returned.\n')
+        player.balance += player.currently_called
+        self.pool -= player.currently_called
+        player.currently_called = 0
+
+        active_players = []
+        for p in self.players:
+            if p.active == True:
+                active_players.append(p)
+            
+        if len(active_players) == 1:
+            self.win(active_players[0])
+            self.end_round()
+        
 
     def add_to_pool(self, player, amount):
         # Takes away funds and adds to pool, used for call and raise
