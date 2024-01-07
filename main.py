@@ -2,7 +2,6 @@ import random
 # Note to self: edittype returns winning card instead of rank number for cleaner interface.
 # sort cards in hand automatically. 
 def main():
-
     p1 = Player('Player 1', 0)
     p2 = Player('Player 2', 0)
     
@@ -21,10 +20,6 @@ class Deck():
         self.suits = ['♦', '♠', '♥', '♣']
         self.ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
         self.current_deck = []
-    
-
-    def check_deck(self):
-        return self.current_deck
     
 
     def shuffle(self):
@@ -63,7 +58,6 @@ class Hand():
 
 
     def __repr__(self):
-        # when printed shows up as | Jack ♥ || 1 ♣ |... __str__ did not work, im unsure why
         self.printable_cards = ''
         for card in self.cards:
             self.printable_cards += f'| {card} |'
@@ -91,6 +85,7 @@ class Hand():
             pair_results = self.find_pairs()
             if pair_results[0] == 'Four of a Kind' or pair_results[0] == 'Full House':
                 return pair_results
+
             elif not self.is_flush() and not self.is_straight():
                 """ 
                 Ive set this up so that itll check that the hand isnt a flush or straight before returning pair pair_results
@@ -110,7 +105,7 @@ class Hand():
 
 
     def is_flush(self):
-        return len(self.make_sorted_value_dict(False)) == 1
+        return len(self.make_sorted_value_dict(rank_or_suit=False)) == 1
 
 
     def is_royal(self):
@@ -143,11 +138,11 @@ class Hand():
 
     def has_pairs(self):
         # (2:2, 6:1, 7:1, 3:1) = One Pair and the length isnt 5 so the hand has a pair
-        return len(self.make_sorted_value_dict(True)) != 5
+        return len(self.make_sorted_value_dict(rank_or_suit=True)) != 5
     
 
     def find_pairs(self):
-        rank_count = self.make_sorted_value_dict(True)
+        rank_count = self.make_sorted_value_dict(rank_or_suit=True)
 
         if len(rank_count) == 2:
             if rank_count[0][1] == 3 and rank_count[1][1] == 2:
@@ -230,14 +225,6 @@ class Table():
         print(f'New cards: {self.hand}\nYour hand: {player.hand}')
         return 'Done trading.' 
 
-        """
-        redo = self.game.retry_loop(player, ['y', 'n', 'd'], f'\nWould you like to trade more? (y/n) ')
-
-        if redo == 'y':
-            return self.trade(player)
-        return 'Done trading.'
-        """
-    
 
 class Player():
     def __init__(self, name, balance=0):
@@ -273,10 +260,10 @@ class Player():
         # Returns formatted str of name, wins, losses, ties and winrate but if wins and losses are 0,
         # does not calculate winrate to avoid zero devision error
         if self.wins == 0 and self.losses == 0:
-            return f'\n-----{self.name}-----\n~Total wins: {self.wins}\n~Total losses: {self.losses}\n~Total ties: {self.ties}\n~Win rate unable to calculate\n------------------'
+            return f'\n-----{self.name}-----\n~ Total wins: {self.wins}\n~ Total losses: {self.losses}\n~ Total ties: {self.ties}\n~ Win rate unable to calculate\n------------------'
         
         win_rate = (self.wins/(self.wins + self.losses))*100
-        return f'\n-----{self.name}-----\n~Total wins: {self.wins}\n~Total losses: {self.losses}\n~Total ties: {self.ties}\n~Win rate: {win_rate:.2f}%\n------------------'
+        return f'\n-----{self.name}-----\n~ Total wins: {self.wins}\n~ Total losses: {self.losses}\n~T otal ties: {self.ties}\n~ Win rate: {win_rate:.2f}%\n------------------'
 
 
 class Card_Game():
@@ -286,7 +273,6 @@ class Card_Game():
 
 
     def create_shuffled_deck(self):
-        # Create deck object, generate it and shuffle it to avoid reusing code.
         self.deck = Deck()
         self.deck.generate_deck()
         self.deck.shuffle()
@@ -307,7 +293,6 @@ class Poker(Card_Game):
     
 
     def quit(self):
-        # Prints a report for all players and exits program, very useful for debugging.
         for p in self.players:
             print(p.report())
         print('Quitting...')
@@ -315,7 +300,6 @@ class Poker(Card_Game):
     
 
     def poker_populate(self, player, amount=5):
-        # Deal cards for player
         for i in range(amount):
             player.hand.cards.append(self.deck.deal_card())
 
@@ -335,7 +319,7 @@ class Poker(Card_Game):
 
     def play_2p(self, p1, p2):
         """
-        Informs player, for everyround, funds will be added, hands will be cleared and checked if their able to play. 
+        Informs player, for every round, funds will be added, hands will be cleared and checked if their able to play. 
         A new shuffled ready for use deck will be created. then each player will get 3 hards to start and start poker intros.
         Then the main poker "loop" will start, if any of the 2 players fold the round will stop and move on to the next.
         
@@ -542,14 +526,12 @@ class Poker(Card_Game):
         
 
     def call(self, player):
-        # asks player for amount and adds that to pool
         call_message = f'Your balance: {player.balance}\nHow much would you like to call?: '
         call_input = self.retry_int_loop(player, player.balance, call_message)
         self.add_to_pool(player, call_input)
 
 
     def able_to_raise(self, player, other_player):
-        # if player balance is more than the otherplayer has called, they can raise
         return player.balance >= other_player.currently_called 
 
 
