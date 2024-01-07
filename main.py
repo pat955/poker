@@ -1,20 +1,22 @@
 import random
-
 def main():
 
     p1 = Player('Player 1', 0)
     p2 = Player('Player 2', 0)
     p3 = Player('Player 3', 0)
     p4 = Player('Player 4', 0)
+    p5 = Player('Player 5', 0)
+    p6 = Player('Player 6', 0)
     
     table = Table()
-    simple_poker = Poker('Simple Poker', [p1, p2, p3], table, 3, 100)
+    simple_poker = Poker('Simple Poker', [p1, p2, p3, p4], table, 3, 100)
     table.add_game(simple_poker)
     
     simple_poker.play()
 
     print(p1.report())
     print(p2.report())
+    
     # print(f'Tie precentage: {(p1.ties/(p1.wins + p1.losses))*100:.2f}%')
     
 
@@ -291,6 +293,7 @@ class Poker(Card_Game):
         # Prints a report for all players and exits program, very useful for debugging.
         for p in self.players:
             print(p.report())
+        
         print('Quitting...')
         exit()
     
@@ -369,14 +372,14 @@ class Poker(Card_Game):
             if self.current_round_active == False:
                 continue
 
-            self.game_loop()
-            if self.current_round_active == False:
-                continue
-
             self.call_for_all(self.players, {self.poker_populate:1})
+            for player in self.active_players:
+                if player.currently_called == 0:
+                    self.deactivate_player(player)
 
-            #formatting = '='*(len(f'{p1.hand.decide_type()[0]}{str(p1.hand)}')//2)
-            #print(f'\n{p1.hand.decide_type()[0]} {p1.hand}\n{formatting}VS{formatting}\n{p2.hand.decide_type()[0]} {p2.hand}\n\n')
+            formatting = '='*(len(f'{player.name}{self.players[0].hand.decide_type()[0]}{str(self.players[0].hand)}')//2)
+            for player in self.active_players:
+                print(f'{player.name}: {player.hand.decide_type()[0]} {sorted(player.hand)}\n{formatting}VS{formatting}')
             print(self.compare_hand_types(), '\n')
 
     def game_loop(self):
@@ -491,7 +494,8 @@ class Poker(Card_Game):
         self.update_active_players()
 
     def compare_hand_types(self, index=0):
-        
+        if len(self.active_players) == 0:
+            return 'Nobody won, somebody has to call!'
         if len(self.active_players) == 1:
             return self.win()
         o_res = self.make_overall_res_dict()
@@ -597,14 +601,8 @@ class Poker(Card_Game):
         player.balance += player.currently_called
         self.pool -= player.currently_called
         player.currently_called = 0
-
-        active_players = []
-        for p in self.players:
-            if p.active == True:
-                active_players.append(p)
-            
-        if len(active_players) == 1:
-            self.win(active_players[0])
+        
+        if len(self.active_players) == 0:
             self.end_round()
         
 
