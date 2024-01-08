@@ -1,22 +1,13 @@
 from deck import *
 def main():
 
-    p1 = Player('Player 1', 0)
-    p2 = Player('Player 2', 0)
-    p3 = Player('Player 3', 0)
-    p4 = Player('Player 4', 0)
-    p5 = Player('Player 5', 0)
-    p6 = Player('Player 6', 0)
-    
     table = Table()
-    simple_poker = Poker('Simple Poker', [p1, p2, p3, p4], table, 3, 100)
+    player_amount = table.get_player_amount()
+
+    simple_poker = Poker('Simple Poker', [Player(f'Player {i}', 0) for i in range(1, int(player_amount)+1)], table, 3, 100)
     table.add_game(simple_poker)
     
-    simple_poker.play()
-
-    print(p1.report())
-    print(p2.report())
-      
+    simple_poker.play()      
 
 class Table():
     def __init__(self):
@@ -26,6 +17,19 @@ class Table():
 
     def add_game(self, game):
         self.game = game
+
+
+    def get_player_amount(self):
+        valid_answers = ['2', '3', '4', '5', '6', '7', '8', '9', '10']
+        player_input = input('How many players? (2-10) ')
+        
+        while player_input not in valid_answers:
+            if player_input == 'q':
+                print('Quitting...')
+                exit()
+        
+            player_input = input('\nInput a number between 2 and 10: ')
+        return player_input
 
 
     def trade(self, player):
@@ -161,43 +165,6 @@ class Poker(Card_Game):
                 else:
                     func(p, args)
 
-
-    def play_2p(self, p1, p2):
-        """
-        Informs player, for everyround, funds will be added, hands will be cleared and checked if their able to play. 
-        A new shuffled ready for use deck will be created. then each player will get 3 hards to start and start poker intros.
-        Then the main poker "loop" will start, if any of the 2 players fold the round will stop and move on to the next.
-        
-        Formatting is simply '=' times x amount to make it look nice.
-        Prints each player hand type and hand. Prints who won.
-        
-        """
-        print('---Quit anytime by pressing "q".---')   
-
-        for i in range(self.rounds):
-            self.current_round_active = True
-            print(f'--------\nRound {i+1}!\n--------')
-
-            self.call_for_all([p1, p2], {Player.add_funds: self.funds_added_each_round, Player.clear_hand: None, Player.able_to_play: None})
-            self.create_shuffled_deck()
-
-            self.table.hand.clear()
-            self.poker_populate(self.table)
-            self.call_for_all([p1, p2], {self.poker_populate:3, self.poker_round_intro: None})
-            
-            self.call_for_all([p1, p2], {self.poker_populate:1})
-            
-            self.game_loop()
-            if self.current_round_active == False:
-                continue
-
-            self.call_for_all([p1, p2], {self.poker_populate:1})
-
-            formatting = '='*(len(f'{p1.hand.decide_type()[0]}{str(p1.hand)}')//2)
-            print(f'\n{p1.hand.decide_type()[0]} {p1.hand}\n{formatting}VS{formatting}\n{p2.hand.decide_type()[0]} {p2.hand}\n\n')
-            print(self.compare_hand_types(), '\n')  
-    
-
     def play(self):
         print('---Quit anytime by pressing "q".---') 
         for i in range(self.rounds):
@@ -228,7 +195,7 @@ class Poker(Card_Game):
 
             formatting = '='*(len(f'{player.name}{self.players[0].hand.decide_type()[0]}{str(self.players[0].hand)}')//2)
             for player in self.active_players:
-                print(f'{player.name}: {player.hand.decide_type()[0]} {sorted(player.hand)}\n{formatting}VS{formatting}')
+                print(f'{player.name}: {player.hand.decide_type()[0]} {player.hand}\n{formatting}VS{formatting}')
             print(self.compare_hand_types(), '\n')
 
 
