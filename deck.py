@@ -13,6 +13,7 @@ class Card():
             return f'{num_to_name[self.rank]} {self.suit}'
         return f'{self.rank} {self.suit}'
 
+    
 class Deck():
     def __init__(self):
         self.suits = ['♦', '♠', '♥', '♣']
@@ -162,4 +163,3 @@ class Hand():
             count[typ] += 1
 
         return tuple(sorted(count.items(), key=lambda item: (item[1], item[0]), reverse=True))
-
