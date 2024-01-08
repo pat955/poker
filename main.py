@@ -1,4 +1,4 @@
-import random
+from deck import *
 def main():
 
     p1 = Player('Player 1', 0)
@@ -16,170 +16,17 @@ def main():
 
     print(p1.report())
     print(p2.report())
-    
-    # print(f'Tie precentage: {(p1.ties/(p1.wins + p1.losses))*100:.2f}%')
-    
-
-class Deck():
-    def __init__(self):
-        self.suits = ['♦', '♠', '♥', '♣']
-        self.ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-        self.current_deck = []
-    
-    def check_deck(self):
-        return self.current_deck
-    
-    def shuffle(self):
-        if len(self.current_deck) == 0:
-            raise Exception('Can\'t shuffle empty deck.') 
-
-        random.shuffle(self.current_deck)
-
-    def generate_deck(self):
-        self.current_deck = [Card(rank,suit) for rank in self.ranks for suit in self.suits]
-        
-    def deal_card(self, index=-1):
-        return self.current_deck.pop(index)
-
-
-class Card():
-    def __init__(self, rank, suit):
-        self.rank = rank
-        self.suit = suit
-
-    def __repr__(self):
-        # Everytime a card is printed it will show up in a "rank of suit" format,
-        # if any of the cards are royal itll use their names instead of value index
-        num_to_name = {11: 'Jack', 12: 'Queen', 13: 'King', 14: 'Ace'}
-        if self.rank in num_to_name:
-            return f'{num_to_name[self.rank]} {self.suit}'
-        return f'{self.rank} {self.suit}'
-
-  
-class Hand():
-    def __init__(self): 
-        self.cards = []
-
-    def __repr__(self):
-        # when printed shows up as | Jack ♥ || 1 ♣ |... __str__ did not work, im unsure why
-        self.printable_cards = ''
-        for card in self.cards:
-            self.printable_cards += f'| {card} |'
-        return self.printable_cards
-    
-    def add_card(self, card):
-        self.cards.append(card)
-       
-    def clear(self):
-        self.cards = []
-
-    def decide_type(self):
-        # From highest value to lowest to make sure wins are correct
-        
-        if self.is_royal() and self.is_flush():
-            return ('Royal Flush', 'n/a')
-
-        elif self.is_flush() and self.is_straight():
-            return ('Straight Flush', 'n/a')
-
-        elif self.has_pairs():
-            pair_results = self.find_pairs()
-            if pair_results[0] == 'Four of a Kind' or pair_results[0] == 'Full House':
-                return pair_results
-            elif not self.is_flush() and not self.is_straight():
-                """ 
-                Ive set this up so that itll check that the hand isnt a flush or straight before returning pair pair_results
-                Python ignores reused elif statement so i have to set it up this way for my current skill level
-                It doesnt look the most clean but i can only think of doing this with a dictionary
-                but i dont have the knowledge to execute that effectively.
-                """
-                return pair_results
-
-        elif self.is_flush():
-            return ('Flush', 'n/a')
-
-        elif self.is_straight():
-            return ('Straight', 'n/a')
-
-        return ('High Card', self.find_high_card(0))
-
-    def is_flush(self):
-        return len(self.make_sorted_value_dict(False)) == 1
-
-    def is_royal(self):
-        hand_ranks = [card.rank for card in self.cards]
-        royal_ranks = [10, 11, 12, 13, 14]
-        return hand_ranks == royal_ranks
-
-    def is_straight(self):
-        """
-        Makes a set of all the ranks found in hand.
-        Returns True if max value - min value + 1 is the length of hand and the set is as long as the hand.
-        Example:
-        (3,4,5,6,7) is the hand. 7 - 3 + 1 = 5 is the the length of hand and
-        we have 5 different ranks so the length  of the set is the same as hand.
-        (4, 5, 7, 8, 9) is almost straight but 9-4 +1 = 6 /= len(hand)
-        """
-        found_ranks = {card.rank for card in self.cards}
-        return (max(found_ranks) - min(found_ranks)+1) == len(self.cards) and len(found_ranks) == len(self.cards)
-                    
-    def find_high_card(self, index):
-        # Index parameter added so that you can find the next highest card in case of a tie
-        highest_card = -1
-        for card in self.cards[index:]:
-            if card.rank > highest_card:
-                highest_card = card.rank
-        return highest_card
-        
-    def has_pairs(self):
-        # (2:2, 6:1, 7:1, 3:1) = One Pair and the length isnt 5 so the hand has a pair
-        return len(self.make_sorted_value_dict(True)) != 5
-    
-    def find_pairs(self):
-        rank_count = self.make_sorted_value_dict(True)
-
-        if len(rank_count) == 2:
-            if rank_count[0][1] == 3 and rank_count[1][1] == 2:
-                return('Full House', rank_count[0][0], rank_count[1][0])
-            return ('Four of a Kind', rank_count[0][0])
-        
-        elif len(rank_count) == 3:
-            if rank_count[0][1] == 2 and rank_count[1][1] == 2:
-                return ('Two Pairs', rank_count[0][0], rank_count[1][0])
-            return ('Three of a Kind', rank_count[0][0])
-
-        elif len(rank_count) == 4:
-            return ('One Pair', rank_count[0][0])
-
-        raise Exception('Something went wrong, remember to raise has_pairs() first')
-
-    def make_sorted_hand(self, reverse=False):
-        # returns a sorted hand, lowest to highest unless reverse = True
-        return sorted(self.cards, key=lambda card: card.rank, reverse=reverse)
-
-    def make_sorted_value_dict(self, rank_or_suit=True):
-        # count amount of ranks or suits  show up in a hand in a dictionary format
-        count = {}
-        for card in self.cards:
-            if rank_or_suit:
-                typ = card.rank
-            else:
-                typ = card.suit
-
-            if typ not in count:
-                count[typ] = 0
-            count[typ] += 1
-
-        return tuple(sorted(count.items(), key=lambda item: (item[1], item[0]), reverse=True))
-
+      
 
 class Table():
     def __init__(self):
         self.hand = Hand()
         self.game = None
 
+
     def add_game(self, game):
         self.game = game
+
 
     def trade(self, player):
         """
@@ -213,15 +60,7 @@ class Table():
         self.hand.add_card(player_card)
         
         print(f'New cards: {self.hand}\nYour hand: {player.hand}')
-        return 'Done trading.' 
-
-        """
-        redo = self.game.retry_loop(player, ['y', 'n', 'd'], f'\nWould you like to trade more? (y/n) ')
-
-        if redo == 'y':
-            return self.trade(player)
         return 'Done trading.'
-        """
     
 
 class Player():
@@ -238,11 +77,14 @@ class Player():
         self.ties = 0 
         self.active = True
 
+
     def clear_hand(self):
         self.hand.clear()
 
+
     def add_funds(self, amount):
         self.balance += amount
+
 
     def able_to_play(self):
         # checks if player is even able to play, quits, shouldnt happen unless no funds are added each round
@@ -251,20 +93,22 @@ class Player():
             self.quit()
         return True
 
+
     def report(self):
-        # Returns formatted str of name, wins, losses, ties and winrate but if wins and losses are 0,
-        # does not calculate winrate to avoid zero devision error
+        # Returns formatted str of name, wins, losses, ties and win rate but if wins and losses are 0,
+        # does not calculate win rate to avoid zero devision error
         if self.wins == 0 and self.losses == 0:
-            return f'\n-----{self.name}-----\n~Total wins: {self.wins}\n~Total losses: {self.losses}\n~Total ties: {self.ties}\n~Win rate unable to calculate\n------------------'
+            return f'\n-----{self.name}-----\n~ Total wins: {self.wins}\n~ Total losses: {self.losses}\n~ Total ties: {self.ties}\n~ Win rate: -\n------------------'
         
         win_rate = (self.wins/(self.wins + self.losses))*100
-        return f'\n-----{self.name}-----\n~Total wins: {self.wins}\n~Total losses: {self.losses}\n~Total ties: {self.ties}\n~Win rate: {win_rate:.2f}%\n------------------'
+        return f'\n-----{self.name}-----\n~ Total wins: {self.wins}\n~ Total losses: {self.losses}\n~ Total ties: {self.ties}\n~ Win rate: {win_rate:.2f}%\n------------------'
 
 
 class Card_Game():
     def __init__(self, name, deck=Deck()):
         self.name = name
         self.deck = deck 
+
 
     def create_shuffled_deck(self):
         # Create deck object, generate it and shuffle it to avoid reusing code.
@@ -289,6 +133,7 @@ class Poker(Card_Game):
         self.highest_caller = None
         self.someone_has_called = False
 
+
     def quit(self):
         # Prints a report for all players and exits program, very useful for debugging.
         for p in self.players:
@@ -297,10 +142,12 @@ class Poker(Card_Game):
         print('Quitting...')
         exit()
     
+
     def poker_populate(self, player, amount=5):
         # Deal cards for player
         for i in range(amount):
             player.hand.cards.append(self.deck.deal_card())
+
 
     def call_for_all(self, players, funcs):
         # Inputted functions will be executed for all players in list as well as table if in player list.  
@@ -313,6 +160,7 @@ class Poker(Card_Game):
                     func(p)
                 else:
                     func(p, args)
+
 
     def play_2p(self, p1, p2):
         """
@@ -349,6 +197,7 @@ class Poker(Card_Game):
             print(f'\n{p1.hand.decide_type()[0]} {p1.hand}\n{formatting}VS{formatting}\n{p2.hand.decide_type()[0]} {p2.hand}\n\n')
             print(self.compare_hand_types(), '\n')  
     
+
     def play(self):
         print('---Quit anytime by pressing "q".---') 
         for i in range(self.rounds):
@@ -382,6 +231,7 @@ class Poker(Card_Game):
                 print(f'{player.name}: {player.hand.decide_type()[0]} {sorted(player.hand)}\n{formatting}VS{formatting}')
             print(self.compare_hand_types(), '\n')
 
+
     def game_loop(self):
         for player in self.players:
             print(f'Table cards:\n{self.table.hand}')
@@ -411,13 +261,16 @@ class Poker(Card_Game):
                     self.fold(player)
             self.player_switch()
 
+
     def able_to_raise(self, player):
         return player.balance >= self.highest_caller.currently_called
-         
+
+
     def player_switch(self):
         button_pressed = input('Press any button when done. ')
         print('\n---------------------\n'*7)
         button_pressed = input('Next player, press any button. ')
+
 
     def poker_round_intro(self, player):
         # Prints table cards, and player hand.
@@ -436,7 +289,8 @@ class Poker(Card_Game):
         if player_input == 'y':   
             self.call(player)
         self.player_switch()
-                
+
+
     def retry_loop(self, player, valid_answers, input_message):
         # returns input only if in valid answers or 'q'.
         player_input = input(input_message)
@@ -447,6 +301,7 @@ class Poker(Card_Game):
         
             player_input = input('Something went wrong, please retry:\n'+ input_message)
         return player_input
+
 
     def retry_int_loop(self, player, valid_range, input_message):
         # Reccursion! integer loop is more complex than a str so i used reccursion.
@@ -468,11 +323,13 @@ class Poker(Card_Game):
         except:
             return self.retry_int_loop(player, valid_range, input_message)
     
+
     def does_val1_win(self, first_val, other_val):
         # Compares two values, if tie, returns tie, if first val wins, returns true.
         if first_val == other_val:
             return 'Tie'
         return first_val > other_val
+
 
     def make_overall_res_dict(self):
         overall_results = []
@@ -482,16 +339,19 @@ class Poker(Card_Game):
             overall_results.append((player, results))
         return overall_results
 
+
     def update_active_players(self):
         self.active_players = []
         for player in self.players:
             if player.active == True:
                 self.active_players.append(player)
 
+
     def deactivate_player(self, player):
         player.active = False
         self.lose(player)
         self.update_active_players()
+
 
     def compare_hand_types(self, index=0):
         if len(self.active_players) == 0:
@@ -536,6 +396,7 @@ class Poker(Card_Game):
 
         return self.next_card_loop(o_res[index][0], o_res[index+1][0])
 
+
     def next_card_loop(self, p1, p2):
         # Used in case of between hand types and hand type value, compares highest card until not a tie
         # If it reaches the end then calls tie function. it is very rare to see a true tie.
@@ -547,6 +408,8 @@ class Poker(Card_Game):
                 return self.compare_hand_types(-1)
             index += 1
         return 'welp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n!!!!!!!!!!!!!!!\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!'
+
+
     def win(self):
         if len(self.active_players) == 1:
             winner = self.active_players[0]
@@ -559,10 +422,12 @@ class Poker(Card_Game):
         self.pool = 0
         return f'{winner.name} wins! They won: {profit}!'
 
+
     def lose(self, player):
         player.losses += 1 
         player.currently_called = 0
     
+
     def tie(self):
         # resets pool, returns and resets called funds. Also adds ties for each player. 
         self.pool = 0 
@@ -571,6 +436,7 @@ class Poker(Card_Game):
             player.currently_called = 0
             player.ties += 1
         
+
     def call(self, player):
         # asks player for amount and adds that to pool
         self.someone_has_called = True
@@ -584,6 +450,7 @@ class Poker(Card_Game):
 
         elif self.highest_caller.currently_called < call_input:
             self.highest_caller = player
+
 
     def raisee(self, player):
         matched_balance = player.balance - self.highest_caller.currently_called
@@ -612,9 +479,11 @@ class Poker(Card_Game):
         player.currently_called += amount
         self.pool += amount
 
+
     def end_round(self):
         self.current_round_active = False
     
+
     def devide_pool(self, players):
         # In case of a total tie, this could be useful?
         devided_pool = self.pool // len(players)
