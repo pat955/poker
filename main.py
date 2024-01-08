@@ -1,6 +1,5 @@
 from deck import *
 def main():
-
     table = Table()
     player_amount = table.get_player_amount()
 
@@ -8,6 +7,7 @@ def main():
     table.add_game(simple_poker)
     
     simple_poker.play()      
+    
 
 class Table():
     def __init__(self):
@@ -30,7 +30,7 @@ class Table():
         
             player_input = input('\nInput a number between 2 and 10: ')
         return player_input
-
+    
 
     def trade(self, player):
         """
@@ -65,8 +65,8 @@ class Table():
         
         print(f'New cards: {self.hand}\nYour hand: {player.hand}')
         return 'Done trading.'
-    
 
+    
 class Player():
     def __init__(self, name, balance=0):
         # hand types needed to determine win by type value
@@ -115,7 +115,6 @@ class Card_Game():
 
 
     def create_shuffled_deck(self):
-        # Create deck object, generate it and shuffle it to avoid reusing code.
         self.deck = Deck()
         self.deck.generate_deck()
         self.deck.shuffle()
@@ -139,7 +138,6 @@ class Poker(Card_Game):
 
 
     def quit(self):
-        # Prints a report for all players and exits program, very useful for debugging.
         for p in self.players:
             print(p.report())
         
@@ -148,7 +146,6 @@ class Poker(Card_Game):
     
 
     def poker_populate(self, player, amount=5):
-        # Deal cards for player
         for i in range(amount):
             player.hand.cards.append(self.deck.deal_card())
 
@@ -167,6 +164,7 @@ class Poker(Card_Game):
 
     def play(self):
         print('---Quit anytime by pressing "q".---') 
+
         for i in range(self.rounds):
             self.current_round_active = True
             self.highest_caller = None
@@ -233,11 +231,12 @@ class Poker(Card_Game):
         return player.balance >= self.highest_caller.currently_called
 
 
+
     def player_switch(self):
         button_pressed = input('Press any button when done. ')
         print('\n---------------------\n'*7)
         button_pressed = input('Next player, press any button. ')
-
+    
 
     def poker_round_intro(self, player):
         # Prints table cards, and player hand.
@@ -257,7 +256,7 @@ class Poker(Card_Game):
             self.call(player)
         self.player_switch()
 
-
+        
     def retry_loop(self, player, valid_answers, input_message):
         # returns input only if in valid answers or 'q'.
         player_input = input(input_message)
@@ -374,6 +373,7 @@ class Poker(Card_Game):
             elif index == 4 and len(self.active_players) > 2:
                 return self.compare_hand_types(-1)
             index += 1
+
         return 'welp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n!!!!!!!!!!!!!!!\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!'
 
 
@@ -411,7 +411,6 @@ class Poker(Card_Game):
         call_input = self.retry_int_loop(player, player.balance, call_message)
 
         self.add_to_pool(player, call_input)
-
         if self.highest_caller == None:
             self.highest_caller = player
 
@@ -426,7 +425,7 @@ class Poker(Card_Game):
         self.add_to_pool(player, raise_input + self.highest_caller.currently_called)
         self.highest_caller = player
 
-    
+
     def fold(self, player):
         
         self.deactivate_player(player)
@@ -438,7 +437,7 @@ class Poker(Card_Game):
         
         if len(self.active_players) == 0:
             self.end_round()
-        
+
 
     def add_to_pool(self, player, amount):
         # Takes away funds and adds to pool, used for call and raise
@@ -457,5 +456,6 @@ class Poker(Card_Game):
 
         for p in players:
             p.balance += devided_pool
+
 
 main()

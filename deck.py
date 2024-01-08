@@ -13,7 +13,7 @@ class Card():
             return f'{num_to_name[self.rank]} {self.suit}'
         return f'{self.rank} {self.suit}'
 
-
+    
 class Deck():
     def __init__(self):
         self.suits = ['♦', '♠', '♥', '♣']

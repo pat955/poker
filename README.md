@@ -6,5 +6,12 @@ I don't really know anything about poker but have made a hold'em poker variation
 * Stats, win rate, wins, losses and ties if that somehow occurs
 * Clean UI in terminal
 * Easy quitting
+=======
+
+# Functionality
+* From two to ten players.
+* Stats, win rate, wins, losses and ties if that somehow occurs
+* Clean UI in terminal
+* Easy quitting
 
 Originally this was just me doing task 54 from ProjectEuler.com but i misunderstood(i did not see the input file) and made a poker game instead.
