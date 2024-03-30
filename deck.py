@@ -1,9 +1,9 @@
 import random
+
 class Card():
     def __init__(self, rank, suit):
         self.rank = rank
         self.suit = suit
-
 
     def __repr__(self):
         # Everytime a card is printed it will show up in a "rank of suit" format,
@@ -19,19 +19,15 @@ class Deck():
         self.suits = ['♦', '♠', '♥', '♣']
         self.ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
         self.current_deck = []
-    
 
     def shuffle(self):
         if len(self.current_deck) == 0:
             raise Exception('Can\'t shuffle empty deck.') 
-
         random.shuffle(self.current_deck)
-
 
     def generate_deck(self):
         self.current_deck = [Card(rank,suit) for rank in self.ranks for suit in self.suits]
         
-
     def deal_card(self, index=-1):
         return self.current_deck.pop(index)
 
@@ -40,21 +36,17 @@ class Hand():
     def __init__(self): 
         self.cards = []
 
-
     def __repr__(self):
         self.printable_cards = ''
         for card in self.cards:
             self.printable_cards += f'| {card} |'
         return self.printable_cards
-    
 
     def add_card(self, card):
         self.cards.append(card)
-       
 
     def clear(self):
         self.cards = []
-
 
     def decide_type(self):
         # From highest value to lowest to make sure wins are correct
@@ -87,16 +79,13 @@ class Hand():
 
         return ('High Card', self.find_high_card(0))
 
-
     def is_flush(self):
         return len(self.make_sorted_value_dict(rank_or_suit=False)) == 1
-
 
     def is_royal(self):
         hand_ranks = [card.rank for card in self.cards]
         royal_ranks = [10, 11, 12, 13, 14]
         return hand_ranks == royal_ranks
-
 
     def is_straight(self):
         """
@@ -110,7 +99,6 @@ class Hand():
         found_ranks = {card.rank for card in self.cards}
         return (max(found_ranks) - min(found_ranks)+1) == len(self.cards) and len(found_ranks) == len(self.cards)
 
-
     def find_high_card(self, index):
         # Index parameter added so that you can find the next highest card in case of a tie
         highest_card = -1
@@ -118,13 +106,11 @@ class Hand():
             if card.rank > highest_card:
                 highest_card = card.rank
         return highest_card
-        
 
     def has_pairs(self):
         # (2:2, 6:1, 7:1, 3:1) = One Pair and the length isnt 5 so the hand has a pair
         return len(self.make_sorted_value_dict(rank_or_suit=True)) != 5
     
-
     def find_pairs(self):
         rank_count = self.make_sorted_value_dict(rank_or_suit=True)
 
@@ -143,11 +129,9 @@ class Hand():
 
         raise Exception('Something went wrong, remember to raise has_pairs() first')
 
-
     def make_sorted_hand(self, reverse=False):
         # returns a sorted hand, lowest to highest unless reverse = True
         return sorted(self.cards, key=lambda card: card.rank, reverse=reverse)
-
 
     def make_sorted_value_dict(self, rank_or_suit=True):
         # count amount of ranks or suits  show up in a hand in a dictionary format
