@@ -6,8 +6,7 @@ class Card():
         self.suit = suit
 
     def __repr__(self):
-        # Everytime a card is printed it will show up in a "rank of suit" format,
-        # if any of the cards are royal itll use their names instead of value index
+        # prints in {rank} {suit} format, for royal cards i.e. king, queen.. it'll use its name instea of num
         num_to_name = {11: 'Jack', 12: 'Queen', 13: 'King', 14: 'Ace'}
         if self.rank in num_to_name:
             return f'{num_to_name[self.rank]} {self.suit}'
@@ -49,8 +48,7 @@ class Hand():
         self.cards = []
 
     def decide_type(self):
-        # From highest value to lowest to make sure wins are correct
-        
+        # From highest hand value to lowest to make sure wins are correct
         if self.is_royal() and self.is_flush():
             return ('Royal Flush', 'n/a')
 
@@ -58,17 +56,14 @@ class Hand():
             return ('Straight Flush', 'n/a')
 
         elif self.has_pairs():
+            # this hand could be foak, fh or simply pairs. foak and fh is higher than flush and straight but not pairs
+            # therefore it checks if its a flush or straight before returning pair results
+            # python ignores reused elif statements, thats why its set up this way. Probably cleaner ways
             pair_results = self.find_pairs()
             if pair_results[0] == 'Four of a Kind' or pair_results[0] == 'Full House':
                 return pair_results
 
             elif not self.is_flush() and not self.is_straight():
-                """ 
-                Ive set this up so that itll check that the hand isnt a flush or straight before returning pair pair_results
-                Python ignores reused elif statement so i have to set it up this way for my current skill level
-                It doesnt look the most clean but i can only think of doing this with a dictionary
-                but i dont have the knowledge to execute that effectively.
-                """
                 return pair_results
 
         elif self.is_flush():

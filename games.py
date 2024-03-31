@@ -55,46 +55,42 @@ class Table():
 
 
 class Card_Game():
-    def __init__(self, name, deck=Deck()):
-        self.name = name
-        self.deck = deck 
+    def __init__(self, name, players, deck=Deck()):
+        self.name = name        # str "Poker"
+        self.players = players  # list [p1, p2, ...]
+        self.deck = deck        # class Deck Deck()
 
     def create_shuffled_deck(self):
         self.deck = Deck()
         self.deck.generate_deck()
         self.deck.shuffle()
 
-
-class Poker(Card_Game):
-    def __init__(self, name, players, table, rounds=5, funds_added_each_round=100, deck=Deck()):
-        # Name to maybe print out if im making variations of poker, player list can be useful when making more than 2 player games
-        # table for trades, deck for obvious reasons i hope and rounds that default to 5 if nothing is else is told.
-        # pool for funds that will be awarded to winner and current_round_active tells you if a round is ongoing.
-        super().__init__(name, deck)
-        self.table = table
-        self.funds_added_each_round = funds_added_each_round
-        self.players = players
-        self.active_players = players
-        self.pool = 0
-        self.rounds = rounds
-        self.current_round_active = False
-        self.highest_caller = None
-        self.someone_has_called = False
-
     def quit(self):
         for p in self.players:
             print(p.report())
-        
         print('Quitting...')
         exit()
+
+class Poker(Card_Game):
+    def __init__(self, name, players, table, rounds=5, funds_added_each_round=100, deck=Deck()):
+        super().__init__(name, players, deck)
+        self.table = table
+        self.rounds = rounds
+        self.funds_added_each_round = funds_added_each_round
+        self.active_players = players
+        self.pool = 0
+        self.current_round_active = False
+        self.highest_caller = None
+        self.someone_has_called = False
     
     def poker_populate(self, player, amount=5):
         for i in range(amount):
             player.hand.cards.append(self.deck.deal_card())
 
     def call_for_all(self, players, funcs):
-        # Inputted functions will be executed for all players in list as well as table if in player list.  
-        # Works with multiple arguments if put in a list
+        # Inputted functions(dict) will be executed for all players(list) as well as table if in player list.  
+        # ex. funcs={<function> : <arguements> or [<arg>, <arg>, ...]}
+        # ex. {Player.add_funds: self.funds_added_each_round, Player.clear_hand: None}
         for func, args in funcs.items():
             for p in players:
                 if type(args) == list:
@@ -106,7 +102,6 @@ class Poker(Card_Game):
 
     def play(self):
         print('---Quit anytime by pressing "q".---') 
-
         for i in range(self.rounds):
             self.current_round_active = True
             self.highest_caller = None
@@ -121,7 +116,6 @@ class Poker(Card_Game):
             self.poker_populate(self.table)
 
             self.call_for_all(self.players, {self.poker_populate:3, self.poker_round_intro: None})
-            
             self.call_for_all(self.players, {self.poker_populate:1})
             
             self.game_loop()
@@ -155,10 +149,9 @@ class Poker(Card_Game):
                 
             elif self.able_to_raise(player):
                 player_input = self.retry_loop(player, ['r', 'f', 'n'], '\nDo you want to raise, fold or do nothing? (r/f/n) ') 
-            
+
                 if player_input == 'r':  
                     self.raisee(player)
-
                 elif player_input == 'f':
                     self.fold(player)
             else:
@@ -176,31 +169,25 @@ class Poker(Card_Game):
         button_pressed = input('Next player, press any button. ')
 
     def poker_round_intro(self, player):
-        # Prints table cards, and player hand.
-        # Offers to trade, if y start trade, if not continue and ask if player want to call.
-
+        # Prints table cards, and player hand. Offers trade, offers to call
         print(f'Table cards:\n{self.table.hand}')
         print(f'\n{player.name}\n{player.hand}')
         
         trade_input = self.retry_loop(player, ['y', 'n'], f'\nDo you want to trade? (y/n) ')
-
         if trade_input == 'y':
             print(self.table.trade(player))
 
         player_input = self.retry_loop(player, ['y','n'],'\nDo you want to call? (y/n) ')
-
         if player_input == 'y':   
             self.call(player)
         self.player_switch()
 
     def retry_loop(self, player, valid_answers, input_message):
-        # returns input only if in valid answers or 'q'.
+        # only returns if in valid answers or 'q'.
         player_input = input(input_message)
-        
         while player_input not in valid_answers:
             if player_input == 'q':
                 self.quit()
-        
             player_input = input('Something went wrong, please retry:\n'+ input_message)
         return player_input
 
@@ -212,7 +199,6 @@ class Poker(Card_Game):
 
         if player_input == 'q':
             self.quit()
-
         elif player_input == 'd' and valid_range in [1,2,3,4,5]:
             return 'd'
         try:
@@ -220,12 +206,11 @@ class Poker(Card_Game):
             if int(player_input) <= valid_range:
                 return int(player_input)
             return self.retry_int_loop(player, valid_range, input_message)
-            
         except:
             return self.retry_int_loop(player, valid_range, input_message)
     
     def does_val1_win(self, first_val, other_val):
-        # Compares two values, if tie, returns tie, if first val wins, returns true.
+        # Compares two values. Returns True if first val wins
         if first_val == other_val:
             return 'Tie'
         return first_val > other_val
@@ -369,8 +354,6 @@ class Poker(Card_Game):
         self.current_round_active = False
 
     def devide_pool(self, players):
-        # In case of a total tie, this could be useful?
         devided_pool = self.pool // len(players)
-
         for p in players:
             p.balance += devided_pool
