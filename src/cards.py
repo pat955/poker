@@ -6,11 +6,31 @@ class Card():
         self.suit = suit
 
     def __repr__(self):
-        # prints in {rank} {suit} format, for royal cards i.e. king, queen.. it'll use its name instea of num
-        num_to_name = {11: 'Jack', 12: 'Queen', 13: 'King', 14: 'Ace'}
-        if self.rank in num_to_name:
-            return f'{num_to_name[self.rank]} {self.suit}'
-        return f'{self.rank} {self.suit}'
+        num_symbols = {10: '10', 11: '♞ ', 12: '♛ ', 13: '♚ ', 14: ''}
+        if self.rank in num_symbols:
+            card = f'{num_symbols[self.rank]}{self.suit}'
+            reverse_card = f'{self.suit}{num_symbols[self.rank]}'
+            if self.rank == 14:
+                card = f'  {self.suit} '
+                reverse_card = f' {self.suit}  '
+        else:
+            card = f'{self.rank} {self.suit}'
+            reverse_card = f'{self.suit} {self.rank}'
+        # return card, reverse_card
+        return f'┌─────┐\n│ {card} │\n│     │\n│ {reverse_card} │\n└─────┘\n'
+
+    def get_formatted(self):
+        num_symbols = {10: '10', 11: '♞ ', 12: '♛ ', 13: '♚ ', 14: ''}
+        if self.rank in num_symbols:
+            card = f'{num_symbols[self.rank]}{self.suit}'
+            reverse_card = f'{self.suit}{num_symbols[self.rank]}'
+            if self.rank == 14:
+                card = f'  {self.suit} '
+                reverse_card = f' {self.suit}  '
+        else:
+            card = f'{self.rank} {self.suit}'
+            reverse_card = f'{self.suit} {self.rank}'
+        return (card, reverse_card)
 
     
 class Deck():
@@ -36,10 +56,21 @@ class Hand():
         self.cards = []
 
     def __repr__(self):
-        self.printable_cards = ''
-        for card in self.cards:
-            self.printable_cards += f'| {card} |'
-        return self.printable_cards
+        amount = len(self.cards)
+
+        s = f'┌─────┐ '*amount +'\n'
+
+        for i in range(0, amount):
+            card = self.cards[i].get_formatted()
+            s += f'│ {card[0]} │ '
+        
+        s +='\n' + '│     │ '*amount +'\n'
+        
+        for i in range(0, amount):
+            card = self.cards[i].get_formatted()
+            s += f'│ {card[1]} │ '
+        s += '\n' + '└─────┘ '*amount +'\n'
+        return s
 
     def add_card(self, card):
         self.cards.append(card)

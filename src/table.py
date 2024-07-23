@@ -52,5 +52,5 @@ class Table():
         player.hand.add_card(table_card)
         self.hand.add_card(player_card)
         
-        print(f'New cards: {self.hand}\nYour hand: {player.hand}')
+        print(f'New cards:\n{self.hand}\nYour hand:\n{player.hand}')
         return 'Done trading.'
