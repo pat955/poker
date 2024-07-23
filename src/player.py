@@ -14,6 +14,9 @@ class Player():
         self.ties = 0 
         self.active = True
 
+    def print_hand(self): # Returns: None
+        print(f'{self.name}\n{self.hand}')
+
     def clear_hand(self):
         self.hand.clear()
 

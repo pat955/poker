@@ -4,6 +4,9 @@ class Table():
     def __init__(self):
         self.hand = Hand()
         self.game = None
+    
+    def print_hand(self): # Returns: None
+        print(f'Table cards:\n{self.table.hand}\n')
 
     def add_game(self, game):
         self.game = game

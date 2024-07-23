@@ -14,6 +14,7 @@ class Card_Game():
     def quit(self):
         for p in self.players:
             print(p.report())
+            
         print('Quitting...')
         exit()
 
