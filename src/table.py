@@ -8,10 +8,10 @@ class Table():
     def print_hand(self): # Returns: None
         print(f'Table cards:\n{self.table.hand}\n')
 
-    def add_game(self, game):
+    def add_game(self, game): # Returns: None
         self.game = game
 
-    def get_player_amount(self):
+    def get_player_amount(self): # Returns: String
         valid_answers = ['2', '3', '4', '5', '6', '7', '8', '9', '10']
         player_input = input('How many players? (2-10) ')
         
@@ -22,7 +22,7 @@ class Table():
             player_input = input('\nInput a number between 2 and 10: ')
         return player_input
     
-    def trade(self, player):
+    def trade(self, player): # Returns: String
         """
         Asks player for what card from table hand they would like to take, 1-5, the code will remove 1 so the index is correct.
         you can also input 'd' if youre done trading, thats why we dont remove 1 yet because the input can be a str.

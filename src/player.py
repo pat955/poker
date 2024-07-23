@@ -17,20 +17,20 @@ class Player():
     def print_hand(self): # Returns: None
         print(f'{self.name}\n{self.hand}')
 
-    def clear_hand(self):
+    def clear_hand(self): # Returns: None
         self.hand.clear()
 
-    def add_funds(self, amount):
+    def add_funds(self, amount): # Returns: None
         self.balance += amount
 
-    def able_to_play(self):
-        # checks if player is even able to play, quits, shouldnt happen unless no funds are added each round
+    def able_to_play(self): # Returns: Bool
+        # checks if player is even able to play, quits
         if self.balance == 0:
             print('Unable to play.')
             self.quit()
         return True
 
-    def report(self):
+    def report(self): # Returns: String
         # Returns formatted str of name, wins, losses, ties and win rate but if wins and losses are 0,
         # does not calculate win rate to avoid zero devision error
         if self.wins == 0 and self.losses == 0:

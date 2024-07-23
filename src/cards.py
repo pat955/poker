@@ -16,7 +16,6 @@ class Card():
         else:
             card = f'{self.rank} {self.suit}'
             reverse_card = f'{self.suit} {self.rank}'
-        # return card, reverse_card
         return f'┌─────┐\n│ {card} │\n│     │\n│ {reverse_card} │\n└─────┘\n'
 
     def get_formatted(self):
@@ -31,7 +30,7 @@ class Card():
             card = f'{self.rank} {self.suit}'
             reverse_card = f'{self.suit} {self.rank}'
         return (card, reverse_card)
-
+        
     
 class Deck():
     def __init__(self):
