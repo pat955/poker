@@ -2,7 +2,7 @@
 
 ### Functionality
 * From two to ten players.
-* Stats, win rate, wins, losses and ties if that somehow occurs
+* Stats, win rate, wins, losses and ties
 * Clean UI in terminal
 * Easy quitting (simply press q anywhere)
 
