@@ -1,4 +1,5 @@
 from cards import Hand
+from format import *
 
 class Table():
     def __init__(self):
@@ -23,31 +24,25 @@ class Table():
         return player_input
     
     def trade(self, player): # Returns: String
-        """
-        Asks player for what card from table hand they would like to take, 1-5, the code will remove 1 so the index is correct.
-        you can also input 'd' if youre done trading, thats why we dont remove 1 yet because the input can be a str.
-        program tells player what they have choosen.
-        repeat for player hand except if asks 1-(length of player hand)
-        then the cards are removed and saved in table_card and player_card.
-        when we finally switch in formatted string to save space, possibly changing this soon for more readability.
-        repeat until player presses 'd'
-        """
-        print('\nPress "d" when done trading. Only one trade for now!')
-         
-        table_hand_index = self.game.retry_int_loop(player, 5, f'What card from table would you like? (1-5) ')
-        if table_hand_index == 'd':
+        print('\nPress "d" when done trading.')
+        table_cards = self.hand.cards
+        player_cards = player.hand.cards
+
+        first_card_input = self.game.retry_int_loop(player, len(table_cards), f'What card from table would you like? (1-{len(table_cards)}) ')
+        if first_card_input == 'd':
             return 'Done trading.'
 
-        print(f'\n{self.hand.cards[table_hand_index-1]} choosen.\n')
+        chosen_card = table_cards[first_card_input -1]
+        print_wrapper(f'{chosen_card} {chosen_card.text_format()} choosen.', bolden, stand_out)
 
-        player_hand_index = self.game.retry_int_loop(player, len(player.hand.cards), f'What card would you like to switch out? (1-{len(player.hand.cards)}) ')
-        if player_hand_index == 'd':
+        second_card_input = self.game.retry_int_loop(player, len(player_cards), f'What card would you like to switch out? (1-{len(player_cards)}) ')
+        if second_card_input == 'd':
             return 'Done trading.'
 
-        print(f'\n{player.hand.cards[player_hand_index-1]} choosen.\n')
+        print_wrapper(f'{player_cards[second_card_input-1]} choosen.', bolden, stand_out)
 
-        table_card = self.hand.cards.pop(table_hand_index-1)
-        player_card = player.hand.cards.pop(player_hand_index-1)
+        table_card = self.hand.cards.pop(first_card_input-1)
+        player_card = player_cards.pop(second_card_input-1)
 
         player.hand.add_card(table_card)
         self.hand.add_card(player_card)
