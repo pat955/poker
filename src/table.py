@@ -23,21 +23,26 @@ class Table():
             player_input = input('\nInput a number between 2 and 10: ')
         return player_input
     
-    def trade(self, player): # Returns: String
-        print('\nPress "d" when done trading.')
+    def trade(self, player): # Returns: None
+    
         table_cards = self.hand.cards
         player_cards = player.hand.cards
 
-        first_card_input = self.game.retry_int_loop(player, len(table_cards), f'What card from table would you like? (1-{len(table_cards)}) ')
+        print(' ◼◼◼◼    ' + '◻◻◻◻    ' * (len(table_cards) - 1)) # ◼ ◻
+
+        first_card_input = self.game.retry_int_loop(player, len(table_cards), f'Press \'d\' when done. (1-{len(table_cards)}) ')
         if first_card_input == 'd':
-            return 'Done trading.'
+            print('Done trading.')
+            return 
 
         chosen_card = table_cards[first_card_input -1]
+
         print_wrapper(f'{chosen_card} {chosen_card.text_format()} choosen.', bolden, stand_out)
 
         second_card_input = self.game.retry_int_loop(player, len(player_cards), f'What card would you like to switch out? (1-{len(player_cards)}) ')
         if second_card_input == 'd':
-            return 'Done trading.'
+            print('Done trading.')
+            return 
 
         print_wrapper(f'{player_cards[second_card_input-1]} choosen.', bolden, stand_out)
 
@@ -48,4 +53,5 @@ class Table():
         self.hand.add_card(player_card)
         
         print(f'New cards:\n{self.hand}\nYour hand:\n{player.hand}')
-        return 'Done trading.'
+        print('Done trading.')
+        return

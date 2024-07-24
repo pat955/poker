@@ -4,7 +4,7 @@ class Card():
     def __init__(self, rank, suit):
         self.rank = rank
         self.suit = suit
-        self.symbols = {10: '10', 11: '♞ ', 12: '♛ ', 13: '♚ ', 14: ''}
+        self.symbols = {10: '10', 11: '♞ ', 12: '♛ ', 13: '♚ ', 14: '1 '}
 
     def __repr__(self):
         card, reverse_card = self.get_formatted()
@@ -24,7 +24,7 @@ class Card():
     def text_format(self):
         return f'{self.rank} {self.suit}'
     
-    
+
 class Deck():
     def __init__(self):
         self.suits = ['♦', '♠', '♥', '♣']
@@ -48,21 +48,21 @@ class Hand():
         self.cards = []
 
     def __repr__(self):
-        amount = len(self.cards)
+        n = len(self.cards)
 
-        s = f'┌─────┐ '*amount +'\n'
+        s = f'┌─────┐ ' * n +'\n'
 
-        for i in range(0, amount):
+        for i in range(0, n):
             card = self.cards[i].get_formatted()
             s += f'│ {card[0]} │ '
         
-        s +='\n' + '│     │ '*amount +'\n'
+        s += '\n' + '│     │ ' * n +'\n'
         
-        for i in range(0, amount):
+        for i in range(0, n):
             card = self.cards[i].get_formatted()
             s += f'│ {card[1]} │ '
 
-        s += '\n' + '└─────┘ '*amount +'\n'
+        s += '\n' + '└─────┘ ' * n +'\n'
         return s
 
     def add_card(self, card):
@@ -153,7 +153,7 @@ class Hand():
         return sorted(self.cards, key=lambda card: card.rank, reverse=reverse)
 
     def make_sorted_value_dict(self, rank_or_suit=True):
-        # count amount of ranks or suits  show up in a hand in a dictionary format
+        # count n of ranks or suits  show up in a hand in a dictionary format
         count = {}
         for card in self.cards:
             if rank_or_suit:
