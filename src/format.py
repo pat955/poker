@@ -30,3 +30,19 @@ def red(text):
 
 def yellow(text):
    return color.YELLOW + text + color.END
+
+def green(text):
+   return color.GREEN + text + color.END
+
+def cyan(text):
+   return color.CYAN + text + color.END
+
+def dark_cyan(text):
+   return color.DARKCYAN + text + color.END
+
+def blue(text):
+   return color.BLUE + text + color.END
+
+def purple(text):
+   return color.PURPLE + text + color.END
+
