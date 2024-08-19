@@ -1,4 +1,4 @@
-# PokerShell
+# Texas Hold'em Terminal Game
 -
 
 ## Functionality
